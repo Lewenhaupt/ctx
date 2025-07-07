@@ -120,6 +120,8 @@ jobs:
   update-flake:
     name: Update Nix Flake
     needs: create-release
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
