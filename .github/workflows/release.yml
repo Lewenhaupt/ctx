@@ -121,6 +121,7 @@ jobs:
     name: Update Nix Flake
     needs: create-release
     permissions:
+      contents: write
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
