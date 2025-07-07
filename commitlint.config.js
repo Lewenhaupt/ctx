@@ -18,6 +18,7 @@ module.exports = {
     'body-leading-blank': [1, 'always'],
     'footer-leading-blank': [1, 'always'],
     'body-max-line-length': [0], // Disable body line length limit
-    'footer-max-line-length': [0] // Disable footer line length limit
+    'footer-max-line-length': [0], // Disable footer line length limit
+    'scope-empty': [0, 'never']
   }
 };
