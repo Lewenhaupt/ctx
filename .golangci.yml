@@ -13,7 +13,7 @@ linters:
     - unconvert
     - unparam
     - whitespace
-    - wsl
+    - wsl_v5
   settings:
     gocritic:
       disabled-checks:

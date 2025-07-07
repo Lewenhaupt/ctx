@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-// Config represents the application configuration
+// Config represents the application configuration.
 type Config struct {
 	DefaultTags    []string               `json:"default_tags"`
 	OutputFormats  map[string]string      `json:"output_formats"`
@@ -15,7 +15,7 @@ type Config struct {
 	CustomSettings map[string]interface{} `json:"custom_settings,omitempty"`
 }
 
-// DefaultConfig returns a default configuration
+// DefaultConfig returns a default configuration.
 func DefaultConfig() *Config {
 	return &Config{
 		DefaultTags: []string{},
@@ -28,7 +28,7 @@ func DefaultConfig() *Config {
 	}
 }
 
-// GetConfigDir returns the configuration directory path
+// GetConfigDir returns the configuration directory path.
 func GetConfigDir() (string, error) {
 	configDir := os.Getenv("XDG_CONFIG_HOME")
 	if configDir == "" {
@@ -36,12 +36,14 @@ func GetConfigDir() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to get user home directory: %w", err)
 		}
+
 		configDir = filepath.Join(homeDir, ".config")
 	}
+
 	return filepath.Join(configDir, ".ctx"), nil
 }
 
-// GetFragmentsDir returns the fragments directory path
+// GetFragmentsDir returns the fragments directory path.
 func GetFragmentsDir(config *Config) (string, error) {
 	if config.FragmentsDir != "" {
 		return config.FragmentsDir, nil
@@ -51,16 +53,18 @@ func GetFragmentsDir(config *Config) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return filepath.Join(configDir, "fragments"), nil
 }
 
-// LoadConfig loads configuration from the specified file path
+// LoadConfig loads configuration from the specified file path.
 func LoadConfig(configPath string) (*Config, error) {
 	if configPath == "" {
 		configDir, err := GetConfigDir()
 		if err != nil {
 			return nil, err
 		}
+
 		configPath = filepath.Join(configDir, "config.json")
 	}
 
@@ -82,18 +86,19 @@ func LoadConfig(configPath string) (*Config, error) {
 	return &config, nil
 }
 
-// SaveConfig saves the configuration to the specified file path
+// SaveConfig saves the configuration to the specified file path.
 func SaveConfig(config *Config, configPath string) error {
 	if configPath == "" {
 		configDir, err := GetConfigDir()
 		if err != nil {
 			return err
 		}
+
 		configPath = filepath.Join(configDir, "config.json")
 	}
 
 	// Ensure config directory exists
-	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(configPath), 0o750); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
@@ -102,7 +107,7 @@ func SaveConfig(config *Config, configPath string) error {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
+	if err := os.WriteFile(configPath, data, 0o600); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 

@@ -56,7 +56,7 @@ ctx-tags: rust
 			tmpDir := t.TempDir()
 			tmpFile := filepath.Join(tmpDir, "test.md")
 
-			err := os.WriteFile(tmpFile, []byte(tt.content), 0644)
+			err := os.WriteFile(tmpFile, []byte(tt.content), 0o600)
 			if err != nil {
 				t.Fatalf("Failed to create test file: %v", err)
 			}

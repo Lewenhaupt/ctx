@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// SpliceFragments combines multiple fragments into a single output
+// SpliceFragments combines multiple fragments into a single output.
 func SpliceFragments(fragments []Fragment) string {
 	if len(fragments) == 0 {
 		return ""
@@ -26,7 +26,7 @@ func SpliceFragments(fragments []Fragment) string {
 	return result.String()
 }
 
-// GenerateCommandFile creates a command file for replication
+// GenerateCommandFile creates a command file for replication.
 func GenerateCommandFile(fragments []Fragment, selectedTags []string) string {
 	var result strings.Builder
 
@@ -34,11 +34,13 @@ func GenerateCommandFile(fragments []Fragment, selectedTags []string) string {
 	result.WriteString("# Generated automatically - do not edit manually\n\n")
 
 	result.WriteString("## Selected Tags\n")
+
 	for _, tag := range selectedTags {
 		result.WriteString(fmt.Sprintf("- %s\n", tag))
 	}
 
 	result.WriteString("\n## Fragments Used\n")
+
 	for _, fragment := range fragments {
 		result.WriteString(fmt.Sprintf("- %s (tags: %s)\n",
 			fragment.Path,

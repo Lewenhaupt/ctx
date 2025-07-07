@@ -11,7 +11,7 @@ import (
 	"github.com/user/ctx/internal/parser"
 )
 
-// BuildOptions represents the options for the build command
+// BuildOptions represents the options for the build command.
 type BuildOptions struct {
 	ConfigFile     string
 	Tags           []string
@@ -21,124 +21,146 @@ type BuildOptions struct {
 	Stdout         bool
 }
 
-// RunBuild executes the build command with TUI
-func RunBuild(opts BuildOptions) error {
-	// Load configuration
-	cfg, err := config.LoadConfig(opts.ConfigFile)
+// RunBuild executes the build command with TUI.
+func RunBuild(opts *BuildOptions) error {
+	cfg, fragments, err := loadConfigAndFragments(opts.ConfigFile)
 	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+		return err
 	}
 
-	// Get fragments directory
-	fragmentsDir, err := config.GetFragmentsDir(cfg)
+	selectedTags, err := determineSelectedTags(opts, cfg, fragments)
 	if err != nil {
-		return fmt.Errorf("failed to get fragments directory: %w", err)
+		return err
 	}
 
-	// Scan for fragments
-	fragments, err := parser.ScanFragments(fragmentsDir)
-	if err != nil {
-		return fmt.Errorf("failed to scan fragments: %w", err)
-	}
-
-	if len(fragments) == 0 {
-		return fmt.Errorf("no fragments found in %s", fragmentsDir)
-	}
-
-	// Get all available tags
-	allTags := parser.GetAllTags(fragments)
-	if len(allTags) == 0 {
-		return fmt.Errorf("no tags found in fragments")
-	}
-
-	var selectedTags []string
-
-	// If tags are provided via command line, use them
-	if len(opts.Tags) > 0 {
-		selectedTags = opts.Tags
-	} else if opts.NonInteractive {
-		// Use default tags from config in non-interactive mode
-		selectedTags = cfg.DefaultTags
-	} else {
-		// Interactive tag selection
-		selectedTags, err = selectTags(allTags, cfg.DefaultTags)
-		if err != nil {
-			return fmt.Errorf("tag selection failed: %w", err)
-		}
-	}
-
-	// Filter fragments by selected tags
 	filteredFragments := parser.FilterFragmentsByTags(fragments, selectedTags)
 	if len(filteredFragments) == 0 {
 		return fmt.Errorf("no fragments match the selected tags: %s", strings.Join(selectedTags, ", "))
 	}
 
-	var selectedOutputFormats []string
-	var outputFiles []string
-
-	// Handle output format selection
-	if opts.Stdout {
-		// Output to stdout - no format selection needed
-		selectedOutputFormats = []string{"stdout"}
-	} else if len(opts.OutputFormats) > 0 {
-		// Use provided output formats
-		selectedOutputFormats = opts.OutputFormats
-	} else if opts.OutputFile != "" {
-		// Use custom output file
-		selectedOutputFormats = []string{"custom"}
-		outputFiles = []string{opts.OutputFile}
-	} else if opts.NonInteractive {
-		// Use default output formats from config in non-interactive mode
-		if len(cfg.OutputFormats) == 0 {
-			return fmt.Errorf("no output formats configured and none specified")
-		}
-		for format := range cfg.OutputFormats {
-			selectedOutputFormats = append(selectedOutputFormats, format)
-		}
-	} else {
-		// Interactive output format selection
-		selectedOutputFormats, err = selectOutputFormats(cfg.OutputFormats)
-		if err != nil {
-			return fmt.Errorf("output format selection failed: %w", err)
-		}
+	selectedOutputFormats, outputFiles, err := determineOutputFormats(opts, cfg)
+	if err != nil {
+		return err
 	}
 
-	// Show confirmation if interactive
 	if !opts.NonInteractive {
 		confirmed, err := confirmBuild(filteredFragments, selectedTags, selectedOutputFormats)
 		if err != nil {
 			return fmt.Errorf("confirmation failed: %w", err)
 		}
+
 		if !confirmed {
 			fmt.Println("Build cancelled.")
 			return nil
 		}
 	}
 
-	// Splice fragments
 	output := parser.SpliceFragments(filteredFragments)
 
-	// Handle output
+	return handleOutput(opts, output, selectedOutputFormats, outputFiles, cfg)
+}
+
+func loadConfigAndFragments(configFile string) (*config.Config, []parser.Fragment, error) {
+	cfg, err := config.LoadConfig(configFile)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	fragmentsDir, err := config.GetFragmentsDir(cfg)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get fragments directory: %w", err)
+	}
+
+	fragments, err := parser.ScanFragments(fragmentsDir)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to scan fragments: %w", err)
+	}
+
+	if len(fragments) == 0 {
+		return nil, nil, fmt.Errorf("no fragments found in %s", fragmentsDir)
+	}
+
+	return cfg, fragments, nil
+}
+
+func determineSelectedTags(opts *BuildOptions, cfg *config.Config, fragments []parser.Fragment) ([]string, error) {
+	allTags := parser.GetAllTags(fragments)
+	if len(allTags) == 0 {
+		return nil, fmt.Errorf("no tags found in fragments")
+	}
+
+	if len(opts.Tags) > 0 {
+		return opts.Tags, nil
+	}
+
+	if opts.NonInteractive {
+		return cfg.DefaultTags, nil
+	}
+
+	selectedTags, err := selectTags(allTags, cfg.DefaultTags)
+	if err != nil {
+		return nil, fmt.Errorf("tag selection failed: %w", err)
+	}
+
+	return selectedTags, nil
+}
+
+func determineOutputFormats(opts *BuildOptions, cfg *config.Config) (selectedFormats, outputFiles []string, err error) {
 	if opts.Stdout {
-		// Output to stdout
-		fmt.Print(output)
-	} else {
-		// Write to files
-		err = writeOutputFiles(output, selectedOutputFormats, outputFiles, cfg)
-		if err != nil {
-			return fmt.Errorf("failed to write output files: %w", err)
+		return []string{"stdout"}, nil, nil
+	}
+
+	if len(opts.OutputFormats) > 0 {
+		return opts.OutputFormats, nil, nil
+	}
+
+	if opts.OutputFile != "" {
+		return []string{"custom"}, []string{opts.OutputFile}, nil
+	}
+
+	if opts.NonInteractive {
+		if len(cfg.OutputFormats) == 0 {
+			return nil, nil, fmt.Errorf("no output formats configured and none specified")
 		}
+
+		var selectedOutputFormats []string
+
+		for format := range cfg.OutputFormats {
+			selectedOutputFormats = append(selectedOutputFormats, format)
+		}
+
+		return selectedOutputFormats, nil, nil
+	}
+
+	selectedOutputFormats, err := selectOutputFormats(cfg.OutputFormats)
+	if err != nil {
+		return nil, nil, fmt.Errorf("output format selection failed: %w", err)
+	}
+
+	return selectedOutputFormats, nil, nil
+}
+
+func handleOutput(opts *BuildOptions, output string, selectedOutputFormats, outputFiles []string, cfg *config.Config) error {
+	if opts.Stdout {
+		fmt.Print(output)
+		return nil
+	}
+
+	err := writeOutputFiles(output, selectedOutputFormats, outputFiles, cfg)
+	if err != nil {
+		return fmt.Errorf("failed to write output files: %w", err)
 	}
 
 	return nil
 }
 
-// selectTags presents an interactive multi-select for tag selection
-func selectTags(allTags []string, defaultTags []string) ([]string, error) {
+// selectTags presents an interactive multi-select for tag selection.
+func selectTags(allTags, defaultTags []string) ([]string, error) {
 	var selectedTags []string
 
 	// Create options for multi-select
 	options := make([]huh.Option[string], len(allTags))
+
 	for i, tag := range allTags {
 		options[i] = huh.NewOption(tag, tag)
 	}
@@ -150,6 +172,7 @@ func selectTags(allTags []string, defaultTags []string) ([]string, error) {
 	}
 
 	var preSelected []string
+
 	for _, tag := range allTags {
 		if defaultTagsMap[tag] {
 			preSelected = append(preSelected, tag)
@@ -166,6 +189,7 @@ func selectTags(allTags []string, defaultTags []string) ([]string, error) {
 					if len(val) == 0 {
 						return fmt.Errorf("at least one tag must be selected")
 					}
+
 					return nil
 				}),
 		),
@@ -184,7 +208,7 @@ func selectTags(allTags []string, defaultTags []string) ([]string, error) {
 	return selectedTags, nil
 }
 
-// selectOutputFormats presents an interactive multi-select for output format selection
+// selectOutputFormats presents an interactive multi-select for output format selection.
 func selectOutputFormats(availableFormats map[string]string) ([]string, error) {
 	var selectedFormats []string
 
@@ -209,6 +233,7 @@ func selectOutputFormats(availableFormats map[string]string) ([]string, error) {
 					if len(val) == 0 {
 						return fmt.Errorf("at least one output format must be selected")
 					}
+
 					return nil
 				}),
 		),
@@ -222,8 +247,8 @@ func selectOutputFormats(availableFormats map[string]string) ([]string, error) {
 	return selectedFormats, nil
 }
 
-// confirmBuild shows a confirmation dialog before building
-func confirmBuild(fragments []parser.Fragment, selectedTags []string, outputFormats []string) (bool, error) {
+// confirmBuild shows a confirmation dialog before building.
+func confirmBuild(fragments []parser.Fragment, selectedTags, outputFormats []string) (bool, error) {
 	var confirmed bool
 
 	// Create summary
@@ -253,8 +278,8 @@ func confirmBuild(fragments []parser.Fragment, selectedTags []string, outputForm
 	return confirmed, nil
 }
 
-// writeOutputFiles writes the output to the specified files based on formats
-func writeOutputFiles(output string, formats []string, customFiles []string, cfg *config.Config) error {
+// writeOutputFiles writes the output to the specified files based on formats.
+func writeOutputFiles(output string, formats, customFiles []string, cfg *config.Config) error {
 	for i, format := range formats {
 		var filename string
 
@@ -272,13 +297,13 @@ func writeOutputFiles(output string, formats []string, customFiles []string, cfg
 		// Ensure directory exists
 		dir := filepath.Dir(filename)
 		if dir != "." {
-			if err := os.MkdirAll(dir, 0755); err != nil {
+			if err := os.MkdirAll(dir, 0o750); err != nil {
 				return fmt.Errorf("failed to create directory %s: %w", dir, err)
 			}
 		}
 
 		// Write file
-		if err := os.WriteFile(filename, []byte(output), 0644); err != nil {
+		if err := os.WriteFile(filename, []byte(output), 0o600); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", filename, err)
 		}
 

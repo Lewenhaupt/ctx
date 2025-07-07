@@ -62,7 +62,7 @@ func TestLoadConfig(t *testing.T) {
 			configPath := filepath.Join(tmpDir, "config.json")
 
 			if tt.configContent != "" {
-				err := os.WriteFile(configPath, []byte(tt.configContent), 0644)
+				err := os.WriteFile(configPath, []byte(tt.configContent), 0o600)
 				if err != nil {
 					t.Fatalf("Failed to create test config file: %v", err)
 				}
@@ -74,6 +74,7 @@ func TestLoadConfig(t *testing.T) {
 				if err == nil {
 					t.Error("Expected error, got nil")
 				}
+
 				return
 			}
 
@@ -120,6 +121,7 @@ func TestSaveConfig(t *testing.T) {
 	}
 
 	var savedConfig Config
+
 	err = json.Unmarshal(data, &savedConfig)
 	if err != nil {
 		t.Fatalf("Failed to parse saved config: %v", err)

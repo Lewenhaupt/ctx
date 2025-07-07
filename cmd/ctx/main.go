@@ -40,7 +40,7 @@ and combine the matching fragments into a single output.`,
 			OutputFile:     outputFile,
 			Stdout:         stdout,
 		}
-		return tui.RunBuild(opts)
+		return tui.RunBuild(&opts)
 	},
 }
 

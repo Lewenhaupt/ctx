@@ -24,13 +24,13 @@
         packages.default = pkgs.buildGoModule {
           pname = "ctx";
           version = "0.1.0";
-          
+
           src = ./.;
-          
+
           vendorHash = "sha256-Bxp4bmoqPCygwnHucdWGn9vVwn6PSg3s9UkwTQDtmHc=";
-          
+
           subPackages = [ "cmd/ctx" ];
-          
+
           meta = with pkgs.lib; {
             description = "A CLI tool for combining markdown fragments based on tags";
             homepage = "https://github.com/user/ctx";
@@ -46,6 +46,7 @@
             pkgs.go
             pkgs.gopls
             pkgs.golangci-lint
+            pkgs.gofumpt
 
             # Build tools
             pkgs.git

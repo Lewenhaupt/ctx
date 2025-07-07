@@ -9,15 +9,34 @@ import (
 )
 
 func TestIntegrationBuild(t *testing.T) {
-	// Create temporary directory for test fragments
+	tmpDir := setupTestEnvironment(t)
+	tests := getTestCases()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			runIntegrationTest(t, tmpDir, tt)
+		})
+	}
+}
+
+func setupTestEnvironment(t *testing.T) string {
 	tmpDir := t.TempDir()
+
+	createTestFragments(t, tmpDir)
+	createTestConfig(t, tmpDir)
+	setupEnvironmentVariables(t, tmpDir)
+
+	return tmpDir
+}
+
+func createTestFragments(t *testing.T, tmpDir string) {
 	fragmentsDir := filepath.Join(tmpDir, "fragments")
-	err := os.MkdirAll(fragmentsDir, 0755)
+
+	err := os.MkdirAll(fragmentsDir, 0o755)
 	if err != nil {
 		t.Fatalf("Failed to create fragments directory: %v", err)
 	}
 
-	// Create test fragments
 	fragments := map[string]string{
 		"typescript.md": `---
 ctx-tags: typescript, frontend
@@ -40,15 +59,18 @@ Write clean code.`,
 	}
 
 	for filename, content := range fragments {
-		err := os.WriteFile(filepath.Join(fragmentsDir, filename), []byte(content), 0644)
+		err := os.WriteFile(filepath.Join(fragmentsDir, filename), []byte(content), 0o600)
 		if err != nil {
 			t.Fatalf("Failed to create fragment %s: %v", filename, err)
 		}
 	}
+}
 
-	// Create config file in .ctx directory
+func createTestConfig(t *testing.T, tmpDir string) {
+	fragmentsDir := filepath.Join(tmpDir, "fragments")
 	ctxDir := filepath.Join(tmpDir, ".ctx")
-	err = os.MkdirAll(ctxDir, 0755)
+
+	err := os.MkdirAll(ctxDir, 0o750)
 	if err != nil {
 		t.Fatalf("Failed to create .ctx directory: %v", err)
 	}
@@ -61,23 +83,40 @@ Write clean code.`,
 		}
 	}`
 	configPath := filepath.Join(ctxDir, "config.json")
-	err = os.WriteFile(configPath, []byte(configContent), 0644)
+
+	err = os.WriteFile(configPath, []byte(configContent), 0o600)
 	if err != nil {
 		t.Fatalf("Failed to create config file: %v", err)
 	}
+}
 
-	// Set XDG_CONFIG_HOME to our test directory
+func setupEnvironmentVariables(t *testing.T, tmpDir string) {
 	oldXDGConfig := os.Getenv("XDG_CONFIG_HOME")
+
 	defer func() {
 		if oldXDGConfig != "" {
-			os.Setenv("XDG_CONFIG_HOME", oldXDGConfig)
+			if err := os.Setenv("XDG_CONFIG_HOME", oldXDGConfig); err != nil {
+				t.Errorf("Failed to restore XDG_CONFIG_HOME: %v", err)
+			}
 		} else {
-			os.Unsetenv("XDG_CONFIG_HOME")
+			if err := os.Unsetenv("XDG_CONFIG_HOME"); err != nil {
+				t.Errorf("Failed to unset XDG_CONFIG_HOME: %v", err)
+			}
 		}
 	}()
-	os.Setenv("XDG_CONFIG_HOME", tmpDir)
 
-	tests := []struct {
+	if err := os.Setenv("XDG_CONFIG_HOME", tmpDir); err != nil {
+		t.Fatalf("Failed to set XDG_CONFIG_HOME: %v", err)
+	}
+}
+
+func getTestCases() []struct {
+	name           string
+	args           []string
+	expectedOutput []string
+	expectError    bool
+} {
+	return []struct {
 		name           string
 		args           []string
 		expectedOutput []string
@@ -101,38 +140,54 @@ Write clean code.`,
 			expectError: true,
 		},
 	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Build the binary
-			cmd := exec.Command("go", "build", "-o", filepath.Join(tmpDir, "ctx"), "./cmd/ctx")
-			err := cmd.Run()
-			if err != nil {
-				t.Fatalf("Failed to build binary: %v", err)
-			}
+func runIntegrationTest(t *testing.T, tmpDir string, tt struct {
+	name           string
+	args           []string
+	expectedOutput []string
+	expectError    bool
+},
+) {
+	buildBinary(t, tmpDir)
+	output, err := runCommand(t, tmpDir, tt.args)
 
-			// Run the command
-			cmd = exec.Command(filepath.Join(tmpDir, "ctx"), tt.args...)
-			cmd.Env = append(os.Environ(), "XDG_CONFIG_HOME="+tmpDir)
-			output, err := cmd.CombinedOutput()
+	validateTestResult(t, output, err, tt.expectedOutput, tt.expectError)
+}
 
-			if tt.expectError {
-				if err == nil {
-					t.Error("Expected error, got nil")
-				}
-				return
-			}
+func buildBinary(t *testing.T, tmpDir string) {
+	cmd := exec.Command("go", "build", "-o", filepath.Join(tmpDir, "ctx"), "./cmd/ctx")
 
-			if err != nil {
-				t.Fatalf("Command failed: %v\nOutput: %s", err, string(output))
-			}
+	err := cmd.Run()
+	if err != nil {
+		t.Fatalf("Failed to build binary: %v", err)
+	}
+}
 
-			outputStr := string(output)
-			for _, expected := range tt.expectedOutput {
-				if !strings.Contains(outputStr, expected) {
-					t.Errorf("Expected output to contain %q, got: %s", expected, outputStr)
-				}
-			}
-		})
+func runCommand(t *testing.T, tmpDir string, args []string) ([]byte, error) {
+	cmd := exec.Command(filepath.Join(tmpDir, "ctx"), args...)
+	cmd.Env = append(os.Environ(), "XDG_CONFIG_HOME="+tmpDir)
+
+	return cmd.CombinedOutput()
+}
+
+func validateTestResult(t *testing.T, output []byte, err error, expectedOutput []string, expectError bool) {
+	if expectError {
+		if err == nil {
+			t.Error("Expected error, got nil")
+		}
+
+		return
+	}
+
+	if err != nil {
+		t.Fatalf("Command failed: %v\nOutput: %s", err, string(output))
+	}
+
+	outputStr := string(output)
+	for _, expected := range expectedOutput {
+		if !strings.Contains(outputStr, expected) {
+			t.Errorf("Expected output to contain %q, got: %s", expected, outputStr)
+		}
 	}
 }

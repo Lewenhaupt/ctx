@@ -9,14 +9,14 @@ import (
 	"strings"
 )
 
-// Fragment represents a markdown fragment with its metadata
+// Fragment represents a markdown fragment with its metadata.
 type Fragment struct {
 	Path    string   `json:"path"`
 	Tags    []string `json:"tags"`
 	Content string   `json:"content"`
 }
 
-// ScanFragments scans the fragments directory and returns all found fragments
+// ScanFragments scans the fragments directory and returns all found fragments.
 func ScanFragments(fragmentsDir string) ([]Fragment, error) {
 	var fragments []Fragment
 
@@ -35,6 +35,7 @@ func ScanFragments(fragmentsDir string) ([]Fragment, error) {
 			if err != nil {
 				return fmt.Errorf("failed to parse fragment %s: %w", path, err)
 			}
+
 			fragments = append(fragments, *fragment)
 		}
 
@@ -44,18 +45,27 @@ func ScanFragments(fragmentsDir string) ([]Fragment, error) {
 	return fragments, err
 }
 
-// ParseFragment parses a single markdown file and extracts ctx-tags and content
+// ParseFragment parses a single markdown file and extracts ctx-tags and content.
 func ParseFragment(filePath string) (*Fragment, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("Warning: failed to close file %s: %v\n", filePath, err)
+		}
+	}()
 
 	scanner := bufio.NewScanner(file)
+
 	var tags []string
+
 	var contentLines []string
+
 	var inFrontmatter bool
+
 	var frontmatterProcessed bool
 
 	// Regex to match ctx-tags line
@@ -71,6 +81,7 @@ func ParseFragment(filePath string) (*Fragment, error) {
 				if !inFrontmatter {
 					frontmatterProcessed = true
 				}
+
 				continue
 			}
 		}
@@ -87,11 +98,8 @@ func ParseFragment(filePath string) (*Fragment, error) {
 					}
 				}
 			}
-		} else if frontmatterProcessed {
-			// After frontmatter, collect all content
-			contentLines = append(contentLines, line)
 		} else {
-			// No frontmatter detected, treat as content
+			// After frontmatter or no frontmatter detected, collect all content
 			contentLines = append(contentLines, line)
 		}
 	}
@@ -109,9 +117,10 @@ func ParseFragment(filePath string) (*Fragment, error) {
 	}, nil
 }
 
-// GetAllTags extracts all unique tags from a slice of fragments
+// GetAllTags extracts all unique tags from a slice of fragments.
 func GetAllTags(fragments []Fragment) []string {
 	tagSet := make(map[string]bool)
+
 	for _, fragment := range fragments {
 		for _, tag := range fragment.Tags {
 			tagSet[tag] = true
@@ -126,7 +135,7 @@ func GetAllTags(fragments []Fragment) []string {
 	return tags
 }
 
-// FilterFragmentsByTags returns fragments that contain any of the specified tags
+// FilterFragmentsByTags returns fragments that contain any of the specified tags.
 func FilterFragmentsByTags(fragments []Fragment, selectedTags []string) []Fragment {
 	if len(selectedTags) == 0 {
 		return fragments
@@ -138,6 +147,7 @@ func FilterFragmentsByTags(fragments []Fragment, selectedTags []string) []Fragme
 	}
 
 	var filtered []Fragment
+
 	for _, fragment := range fragments {
 		for _, tag := range fragment.Tags {
 			if tagSet[tag] {
