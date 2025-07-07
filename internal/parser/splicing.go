@@ -40,12 +40,12 @@ func GenerateCommandFile(fragments []Fragment, selectedTags []string) string {
 
 	result.WriteString("\n## Fragments Used\n")
 	for _, fragment := range fragments {
-		result.WriteString(fmt.Sprintf("- %s (tags: %s)\n", 
-			fragment.Path, 
+		result.WriteString(fmt.Sprintf("- %s (tags: %s)\n",
+			fragment.Path,
 			strings.Join(fragment.Tags, ", ")))
 	}
 
-	result.WriteString(fmt.Sprintf("\n## Command\n```\nctx build --tags %s\n```\n", 
+	result.WriteString(fmt.Sprintf("\n## Command\n```\nctx build --tags %s\n```\n",
 		strings.Join(selectedTags, ",")))
 
 	return result.String()

@@ -9,9 +9,9 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	DefaultTags    []string            `json:"default_tags"`
-	OutputFormats  map[string]string   `json:"output_formats"`
-	FragmentsDir   string              `json:"fragments_dir,omitempty"`
+	DefaultTags    []string               `json:"default_tags"`
+	OutputFormats  map[string]string      `json:"output_formats"`
+	FragmentsDir   string                 `json:"fragments_dir,omitempty"`
 	CustomSettings map[string]interface{} `json:"custom_settings,omitempty"`
 }
 
@@ -46,7 +46,7 @@ func GetFragmentsDir(config *Config) (string, error) {
 	if config.FragmentsDir != "" {
 		return config.FragmentsDir, nil
 	}
-	
+
 	configDir, err := GetConfigDir()
 	if err != nil {
 		return "", err

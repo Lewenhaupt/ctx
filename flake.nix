@@ -45,6 +45,7 @@
             # go
             pkgs.go
             pkgs.gopls
+            pkgs.golangci-lint
 
             # Build tools
             pkgs.git

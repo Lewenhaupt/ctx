@@ -55,7 +55,7 @@ ctx-tags: rust
 			// Create temporary file
 			tmpDir := t.TempDir()
 			tmpFile := filepath.Join(tmpDir, "test.md")
-			
+
 			err := os.WriteFile(tmpFile, []byte(tt.content), 0644)
 			if err != nil {
 				t.Fatalf("Failed to create test file: %v", err)
@@ -99,7 +99,7 @@ func TestGetAllTags(t *testing.T) {
 	}
 
 	tags := GetAllTags(fragments)
-	
+
 	expected := map[string]bool{
 		"typescript": true,
 		"frontend":   true,
@@ -127,28 +127,28 @@ func TestFilterFragmentsByTags(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		selectedTags []string
+		name          string
+		selectedTags  []string
 		expectedPaths []string
 	}{
 		{
-			name:         "single tag match",
-			selectedTags: []string{"typescript"},
+			name:          "single tag match",
+			selectedTags:  []string{"typescript"},
 			expectedPaths: []string{"typescript.md"},
 		},
 		{
-			name:         "multiple tag match",
-			selectedTags: []string{"typescript", "rust"},
+			name:          "multiple tag match",
+			selectedTags:  []string{"typescript", "rust"},
 			expectedPaths: []string{"typescript.md", "rust.md"},
 		},
 		{
-			name:         "no matches",
-			selectedTags: []string{"nonexistent"},
+			name:          "no matches",
+			selectedTags:  []string{"nonexistent"},
 			expectedPaths: []string{},
 		},
 		{
-			name:         "empty tags",
-			selectedTags: []string{},
+			name:          "empty tags",
+			selectedTags:  []string{},
 			expectedPaths: []string{"typescript.md", "rust.md", "general.md"},
 		},
 	}
@@ -156,14 +156,14 @@ func TestFilterFragmentsByTags(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			filtered := FilterFragmentsByTags(fragments, tt.selectedTags)
-			
+
 			if len(filtered) != len(tt.expectedPaths) {
 				t.Errorf("Expected %d fragments, got %d", len(tt.expectedPaths), len(filtered))
 			}
 
 			for i, expectedPath := range tt.expectedPaths {
 				if i >= len(filtered) || filtered[i].Path != expectedPath {
-					t.Errorf("Expected fragment path %s at index %d, got %s", 
+					t.Errorf("Expected fragment path %s at index %d, got %s",
 						expectedPath, i, filtered[i].Path)
 				}
 			}
