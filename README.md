@@ -172,6 +172,26 @@ go test ./...
 go build -o ctx ./cmd/ctx
 ```
 
+### Running Locally During Development
+
+```bash
+# Run directly with go run
+go run ./cmd/ctx build
+
+# Run with specific flags
+go run ./cmd/ctx build --tags typescript,rust
+
+# Run non-interactively
+go run ./cmd/ctx build --tags general --non-interactive
+
+# Use direnv to ensure correct environment
+direnv exec . go run ./cmd/ctx build
+
+# Build and run the binary
+go build -o ctx ./cmd/ctx
+./ctx build
+```
+
 ### Testing
 
 ```bash
