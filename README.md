@@ -15,6 +15,73 @@ A CLI tool for combining markdown fragments based on tags. Split your documentat
 
 ### Using Nix (Recommended)
 
+#### Option 1: Direct Installation from GitHub
+
+```bash
+# Install directly from the repository
+nix profile install github:user/ctx
+
+# Or run without installing
+nix run github:user/ctx -- build --help
+
+# For faster builds, you can also use the binary cache (if available)
+# nix profile install github:user/ctx --extra-substituters https://cache.nixos.org
+```
+
+#### Option 2: Using Nix Flakes in your project
+
+Add to your `flake.nix`:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    ctx.url = "github:user/ctx";
+  };
+
+  outputs = { self, nixpkgs, ctx, ... }:
+    let
+      system = "x86_64-linux"; # or your system
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      devShells.${system}.default = pkgs.mkShell {
+        packages = [
+          ctx.packages.${system}.default
+          # other packages...
+        ];
+      };
+    };
+}
+```
+
+Then use in your project:
+
+```bash
+# Enter development shell with ctx available
+nix develop
+
+# Or run directly
+nix run .#ctx -- build --help
+```
+
+#### Option 3: NixOS System Installation
+
+Add to your NixOS configuration:
+
+```nix
+# configuration.nix or flake.nix
+{
+  inputs.ctx.url = "github:user/ctx";
+  
+  # In your system configuration:
+  environment.systemPackages = [
+    inputs.ctx.packages.${system}.default
+  ];
+}
+```
+
+#### Option 4: Development Setup
+
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -172,13 +239,18 @@ cd ctx
 # Setup development environment
 direnv allow  # if using Nix
 # or
-go mod download
+nix develop  # if using Nix without direnv
+# or
+go mod download  # if using Go directly
 
 # Run tests
 go test ./...
 
-# Build
+# Build using Go
 go build -o ctx ./cmd/ctx
+
+# Or build using Nix
+nix build .#default
 ```
 
 ### Running Locally During Development

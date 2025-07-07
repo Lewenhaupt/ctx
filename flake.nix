@@ -21,6 +21,25 @@
         };
       in
       {
+        packages.default = pkgs.buildGoModule {
+          pname = "ctx";
+          version = "0.1.0";
+          
+          src = ./.;
+          
+          vendorHash = "sha256-Bxp4bmoqPCygwnHucdWGn9vVwn6PSg3s9UkwTQDtmHc=";
+          
+          subPackages = [ "cmd/ctx" ];
+          
+          meta = with pkgs.lib; {
+            description = "A CLI tool for combining markdown fragments based on tags";
+            homepage = "https://github.com/user/ctx";
+            license = licenses.mit; # Update with actual license
+            maintainers = [ ];
+            mainProgram = "ctx";
+          };
+        };
+
         devShells.default = pkgs.mkShell {
           packages = [
             # go
