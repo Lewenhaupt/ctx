@@ -39,7 +39,7 @@ jobs:
           go test ./...
       - name: Create Go dependencies PR
         if: env.GO_DEPS_UPDATED == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update Go dependencies"
@@ -123,7 +123,7 @@ jobs:
           ./result/bin/ctx --help
       - name: Create Nix dependencies PR
         if: env.NIX_DEPS_UPDATED == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update Nix flake inputs"
