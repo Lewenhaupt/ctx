@@ -2,6 +2,8 @@ package tui
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/huh"
@@ -11,9 +13,12 @@ import (
 
 // BuildOptions represents the options for the build command
 type BuildOptions struct {
-	ConfigFile string
-	Tags       []string
+	ConfigFile     string
+	Tags           []string
 	NonInteractive bool
+	OutputFormats  []string
+	OutputFile     string
+	Stdout         bool
 }
 
 // RunBuild executes the build command with TUI
@@ -68,9 +73,39 @@ func RunBuild(opts BuildOptions) error {
 		return fmt.Errorf("no fragments match the selected tags: %s", strings.Join(selectedTags, ", "))
 	}
 
+	var selectedOutputFormats []string
+	var outputFiles []string
+
+	// Handle output format selection
+	if opts.Stdout {
+		// Output to stdout - no format selection needed
+		selectedOutputFormats = []string{"stdout"}
+	} else if len(opts.OutputFormats) > 0 {
+		// Use provided output formats
+		selectedOutputFormats = opts.OutputFormats
+	} else if opts.OutputFile != "" {
+		// Use custom output file
+		selectedOutputFormats = []string{"custom"}
+		outputFiles = []string{opts.OutputFile}
+	} else if opts.NonInteractive {
+		// Use default output formats from config in non-interactive mode
+		if len(cfg.OutputFormats) == 0 {
+			return fmt.Errorf("no output formats configured and none specified")
+		}
+		for format := range cfg.OutputFormats {
+			selectedOutputFormats = append(selectedOutputFormats, format)
+		}
+	} else {
+		// Interactive output format selection
+		selectedOutputFormats, err = selectOutputFormats(cfg.OutputFormats)
+		if err != nil {
+			return fmt.Errorf("output format selection failed: %w", err)
+		}
+	}
+
 	// Show confirmation if interactive
 	if !opts.NonInteractive {
-		confirmed, err := confirmBuild(filteredFragments, selectedTags)
+		confirmed, err := confirmBuild(filteredFragments, selectedTags, selectedOutputFormats)
 		if err != nil {
 			return fmt.Errorf("confirmation failed: %w", err)
 		}
@@ -83,8 +118,17 @@ func RunBuild(opts BuildOptions) error {
 	// Splice fragments
 	output := parser.SpliceFragments(filteredFragments)
 
-	// Output to stdout
-	fmt.Print(output)
+	// Handle output
+	if opts.Stdout {
+		// Output to stdout
+		fmt.Print(output)
+	} else {
+		// Write to files
+		err = writeOutputFiles(output, selectedOutputFormats, outputFiles, cfg)
+		if err != nil {
+			return fmt.Errorf("failed to write output files: %w", err)
+		}
+	}
 
 	return nil
 }
@@ -140,14 +184,52 @@ func selectTags(allTags []string, defaultTags []string) ([]string, error) {
 	return selectedTags, nil
 }
 
+// selectOutputFormats presents an interactive multi-select for output format selection
+func selectOutputFormats(availableFormats map[string]string) ([]string, error) {
+	var selectedFormats []string
+
+	// Create options for multi-select
+	options := make([]huh.Option[string], 0, len(availableFormats)+1)
+
+	// Add configured formats
+	for format := range availableFormats {
+		options = append(options, huh.NewOption(format, format))
+	}
+
+	// Add stdout option
+	options = append(options, huh.NewOption("stdout", "stdout"))
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewMultiSelect[string]().
+				Title("Select output format(s):").
+				Options(options...).
+				Value(&selectedFormats).
+				Validate(func(val []string) error {
+					if len(val) == 0 {
+						return fmt.Errorf("at least one output format must be selected")
+					}
+					return nil
+				}),
+		),
+	)
+
+	err := form.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	return selectedFormats, nil
+}
+
 // confirmBuild shows a confirmation dialog before building
-func confirmBuild(fragments []parser.Fragment, selectedTags []string) (bool, error) {
+func confirmBuild(fragments []parser.Fragment, selectedTags []string, outputFormats []string) (bool, error) {
 	var confirmed bool
 
 	// Create summary
-	summary := fmt.Sprintf("Selected tags: %s\nFragments to include: %d\n\nFragments:\n", 
-		strings.Join(selectedTags, ", "), len(fragments))
-	
+	summary := fmt.Sprintf("Selected tags: %s\nOutput formats: %s\nFragments to include: %d\n\nFragments:\n",
+		strings.Join(selectedTags, ", "), strings.Join(outputFormats, ", "), len(fragments))
+
 	for _, fragment := range fragments {
 		summary += fmt.Sprintf("- %s (tags: %s)\n", fragment.Path, strings.Join(fragment.Tags, ", "))
 	}
@@ -169,4 +251,39 @@ func confirmBuild(fragments []parser.Fragment, selectedTags []string) (bool, err
 	}
 
 	return confirmed, nil
+}
+
+// writeOutputFiles writes the output to the specified files based on formats
+func writeOutputFiles(output string, formats []string, customFiles []string, cfg *config.Config) error {
+	for i, format := range formats {
+		var filename string
+
+		if format == "stdout" {
+			// Skip stdout in file writing
+			continue
+		} else if format == "custom" && i < len(customFiles) {
+			filename = customFiles[i]
+		} else if outputFile, exists := cfg.OutputFormats[format]; exists {
+			filename = outputFile
+		} else {
+			return fmt.Errorf("unknown output format: %s", format)
+		}
+
+		// Ensure directory exists
+		dir := filepath.Dir(filename)
+		if dir != "." {
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				return fmt.Errorf("failed to create directory %s: %w", dir, err)
+			}
+		}
+
+		// Write file
+		if err := os.WriteFile(filename, []byte(output), 0644); err != nil {
+			return fmt.Errorf("failed to write file %s: %w", filename, err)
+		}
+
+		fmt.Printf("Output written to: %s\n", filename)
+	}
+
+	return nil
 }

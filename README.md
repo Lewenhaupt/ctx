@@ -124,26 +124,35 @@ Your markdown content here.
 ctx build [flags]
 
 Flags:
-  --tags strings         Comma-separated list of tags to include
-  --non-interactive     Run in non-interactive mode
-  --config-file string  Config file path (default: XDG_CONFIG_DIR/.ctx/config.json)
-  -h, --help           Help for build
+  --tags strings              Comma-separated list of tags to include
+  --non-interactive          Run in non-interactive mode
+  --output-format strings    Output format(s) to use (e.g., opencode, gemini, custom)
+  --output-file string       Output file path (overrides format-based naming)
+  --stdout                   Output to stdout instead of files
+  --config-file string       Config file path (default: XDG_CONFIG_DIR/.ctx/config.json)
+  -h, --help                Help for build
 ```
 
 ### Examples
 
 ```bash
-# Interactive tag selection
+# Interactive mode (select tags and output formats)
 ctx build
 
-# Build with specific tags
-ctx build --tags typescript,rust
+# Build with specific tags and output to stdout
+ctx build --tags typescript,rust --stdout
 
-# Non-interactive build with config file
-ctx build --tags frontend --non-interactive --config-file ./my-config.json
+# Non-interactive build with specific output format
+ctx build --tags frontend --non-interactive --output-format opencode
 
-# Build and save to file
-ctx build --tags general,coding --non-interactive > output.md
+# Build with multiple output formats
+ctx build --tags general,coding --output-format opencode,gemini --non-interactive
+
+# Build to custom file
+ctx build --tags typescript --output-file custom-output.md --non-interactive
+
+# Pipe output to another command
+ctx build --tags general --stdout --non-interactive | grep "function"
 ```
 
 ## Development
@@ -178,18 +187,18 @@ go build -o ctx ./cmd/ctx
 # Run directly with go run
 go run ./cmd/ctx build
 
-# Run with specific flags
-go run ./cmd/ctx build --tags typescript,rust
+# Run with specific flags and output to stdout
+go run ./cmd/ctx build --tags typescript,rust --stdout
 
-# Run non-interactively
-go run ./cmd/ctx build --tags general --non-interactive
+# Run non-interactively with specific output format
+go run ./cmd/ctx build --tags general --non-interactive --output-format opencode
 
 # Use direnv to ensure correct environment
 direnv exec . go run ./cmd/ctx build
 
 # Build and run the binary
 go build -o ctx ./cmd/ctx
-./ctx build
+./ctx build --stdout --non-interactive --tags general
 ```
 
 ### Testing

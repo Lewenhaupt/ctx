@@ -22,12 +22,12 @@ This file outlines the tasks required to build the `ctx` CLI tool.
 ## 2. Configuration Management ✅
 - [x] Define the JSON structure for the configuration file (`config.json`).
 - [x] Create a JSON schema (`config.schema.json`) for the configuration file.
-- [x] Implement logic to load config from `XDG_CONFIG_DIR/.ctx/config.json`.
+- [x] Implement logic to load config from `XDG_CONFIG_HOME/.ctx/config.json`.
 - [x] Implement the `--config-file` CLI argument to override the default config path.
 - [x] Add logic to read default tags from the configuration.
 
 ## 3. Core Logic ✅
-- [x] Implement a file scanner to find all fragment files in `XDG_CONFIG_DIR/.ctx/fragments`.
+- [x] Implement a file scanner to find all fragment files in `XDG_CONFIG_HOME/.ctx/fragments`.
 - [x] Implement a parser to read markdown files and extract `ctx-tags` from the frontmatter.
 - [x] Implement the file splicing logic to combine fragments based on selected tags.
 

@@ -19,6 +19,9 @@ Example command: ```ctx build --tags typescript, rust```
 - Always add unit tests for all functionality you add, aim for at least full branch coverage
 - Write integration tests that test the full functionality, make sure XDG_CONFIG_DIR is overridden for the test execution such that the test-fragments can be part of the repository
 
+## NEVER DO
+- NEVER EVER ADD CODE ATTRIBUTIONS IN COMMIT DESCRIPTIONS!
+
 ## Features
 - Config location under XDG_CONFIG_DIR/.ctx/config.json
     - Config can be overridden using --config-file cli argument

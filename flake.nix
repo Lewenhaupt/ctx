@@ -25,6 +25,7 @@
           packages = [
             # go
             pkgs.go
+            pkgs.gopls
 
             # Build tools
             pkgs.git

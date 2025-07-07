@@ -12,6 +12,9 @@ var (
 	configFile     string
 	tags           []string
 	nonInteractive bool
+	outputFormats  []string
+	outputFile     string
+	stdout         bool
 )
 
 var rootCmd = &cobra.Command{
@@ -33,6 +36,9 @@ and combine the matching fragments into a single output.`,
 			ConfigFile:     configFile,
 			Tags:           tags,
 			NonInteractive: nonInteractive,
+			OutputFormats:  outputFormats,
+			OutputFile:     outputFile,
+			Stdout:         stdout,
 		}
 		return tui.RunBuild(opts)
 	},
@@ -40,10 +46,13 @@ and combine the matching fragments into a single output.`,
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&configFile, "config-file", "", "config file path (default: XDG_CONFIG_DIR/.ctx/config.json)")
-	
+
 	buildCmd.Flags().StringSliceVar(&tags, "tags", []string{}, "comma-separated list of tags to include")
 	buildCmd.Flags().BoolVar(&nonInteractive, "non-interactive", false, "run in non-interactive mode")
-	
+	buildCmd.Flags().StringSliceVar(&outputFormats, "output-format", []string{}, "output format(s) to use (e.g., opencode, gemini, custom)")
+	buildCmd.Flags().StringVar(&outputFile, "output-file", "", "output file path (overrides format-based naming)")
+	buildCmd.Flags().BoolVar(&stdout, "stdout", false, "output to stdout instead of files")
+
 	rootCmd.AddCommand(buildCmd)
 }
 
