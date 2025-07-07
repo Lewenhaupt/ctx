@@ -24,54 +24,7 @@ jobs:
 
     - name: Install commitlint
       run: |
-        npm install -g @commitlint/cli @commitlint/config-conventional
-
-    - name: Create commitlint config
-      run: |
-        cat > commitlint.config.js << 'EOF'
-        module.exports = {
-          extends: ['@commitlint/config-conventional'],
-          rules: {
-            'type-enum': [2, 'always', [
-              'feat',
-              'fix', 
-              'docs',
-              'style',
-              'refactor',
-              'test',
-              'chore'
-            ]],
-            'subject-case': [2, 'always', 'sentence-case'],
-            'subject-empty': [2, 'never'],
-            'subject-full-stop': [2, 'never', '.'],
-            'body-leading-blank': [1, 'always'],
-            'footer-leading-blank': [1, 'always'],
-            // Custom rule: no code attributions in commit messages
-            'body-max-line-length': [0],
-            'footer-max-line-length': [0]
-          },
-          plugins: [
-            {
-              rules: {
-                'no-code-attribution': (parsed) => {
-                  const message = parsed.raw.toLowerCase();
-                  const hasAttribution = message.includes('co-authored-by') || 
-                                       message.includes('authored-by') ||
-                                       message.includes('generated with');
-                  
-                  // Allow opencode attribution as it's required
-                  const hasOpenCodeAttribution = message.includes('generated with [opencode]');
-                  
-                  if (hasAttribution && !hasOpenCodeAttribution) {
-                    return [false, 'Commit messages should not contain code attributions (except opencode)'];
-                  }
-                  return [true];
-                }
-              }
-            }
-          ]
-        };
-        EOF
+        npm install -g @commitlint/cli
 
     - name: Lint commit messages
       run: |

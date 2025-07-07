@@ -55,7 +55,10 @@ Write clean code.`,
 
 	configContent := `{
 		"default_tags": ["general"],
-		"fragments_dir": "` + fragmentsDir + `"
+		"fragments_dir": "` + fragmentsDir + `",
+		"output_formats": {
+			"opencode": "AGENTS.md"
+		}
 	}`
 	configPath := filepath.Join(ctxDir, "config.json")
 	err = os.WriteFile(configPath, []byte(configContent), 0644)
@@ -82,19 +85,19 @@ Write clean code.`,
 	}{
 		{
 			name:           "build with typescript tag",
-			args:           []string{"build", "--tags", "typescript", "--non-interactive"},
+			args:           []string{"build", "--tags", "typescript", "--non-interactive", "--stdout"},
 			expectedOutput: []string{"# TypeScript Guidelines", "Use strict mode."},
 			expectError:    false,
 		},
 		{
 			name:           "build with multiple tags",
-			args:           []string{"build", "--tags", "typescript,rust", "--non-interactive"},
+			args:           []string{"build", "--tags", "typescript,rust", "--non-interactive", "--stdout"},
 			expectedOutput: []string{"# TypeScript Guidelines", "# Rust Guidelines"},
 			expectError:    false,
 		},
 		{
 			name:        "build with nonexistent tag",
-			args:        []string{"build", "--tags", "nonexistent", "--non-interactive"},
+			args:        []string{"build", "--tags", "nonexistent", "--non-interactive", "--stdout"},
 			expectError: true,
 		},
 	}
