@@ -243,6 +243,9 @@ nix develop  # if using Nix without direnv
 # or
 go mod download  # if using Go directly
 
+# Setup git hooks for commit message validation
+./scripts/setup-git-hooks.sh
+
 # Run tests
 go test ./...
 
@@ -304,10 +307,13 @@ go test -cover ./...
 
 1. Fork the repository
 2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass: `go test ./...`
-5. Follow commit message format: `feat/chore/bug: description`
-6. Submit a pull request
+3. Set up git hooks: `./scripts/setup-git-hooks.sh`
+4. Add tests for new functionality
+5. Ensure all tests pass: `go test ./...`
+6. Follow commit message format: `type: description` (enforced by git hooks)
+   - Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+   - Example: `feat: add new fragment parsing feature`
+7. Submit a pull request
 
 ## License
 
