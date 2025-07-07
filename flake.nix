@@ -49,6 +49,10 @@
             # Build tools
             pkgs.git
 
+            # Node.js for commitlint and git hooks
+            pkgs.nodejs
+            pkgs.nodePackages.npm
+
             # System libraries
 
             # Additional tools that might be useful
