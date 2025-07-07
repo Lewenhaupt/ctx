@@ -123,6 +123,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -138,16 +139,28 @@ jobs:
             experimental-features = nix-command flakes
             substituters = https://cache.nixos.org/
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-      - name: Cache Nix store
-        uses: actions/cache@v4
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v6
         with:
-          path: |
-            ~/.cache/nix
-            /nix/var/nix/profiles
-            /nix/var/nix/gcroots
-          key: ${{ runner.os }}-nix-${{ hashFiles('flake.lock', 'go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-nix-
+          # restore and save a cache using this key
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock', 'go.sum') }}
+          # if there's no cache hit, restore a cache by this prefix
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          # collect garbage until the Nix store size (in bytes) is at most this number
+          # before trying to save a new cache
+          # 1G = 1073741824
+          gc-max-store-size-linux: 1G
+          # do purge caches
+          purge: true
+          # purge all versions of the cache
+          purge-prefixes: nix-${{ runner.os }}-
+          # created more than this number of seconds ago
+          purge-created: 0
+          # or, last accessed more than this number of seconds ago
+          # relative to the start of the `Post Restore and save Nix store` phase
+          purge-last-accessed: 0
+          # except any version with the key that is the same as the `primary-key`
+          purge-primary-key: never
       - name: Get version from tag
         id: version
         run: |

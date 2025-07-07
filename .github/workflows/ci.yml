@@ -1,14 +1,11 @@
 name: CI
-
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
-
+    branches: [main]
 env:
   GO_VERSION: '1.21'
-
 jobs:
   test:
     name: Test
@@ -16,140 +13,149 @@ jobs:
     strategy:
       matrix:
         go-version: ['1.21', '1.22', '1.23']
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-
-    - name: Install direnv
-      run: |
-        curl -sfL https://direnv.net/install.sh | bash
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Cache Nix store
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/nix
-          /nix/var/nix/profiles
-          /nix/var/nix/gcroots
-        key: ${{ runner.os }}-nix-${{ hashFiles('flake.lock', 'go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-nix-
-
-    - name: Allow direnv
-      run: direnv allow
-
-    - name: Download dependencies
-      run: direnv exec . go mod download
-
-    - name: Run unit tests
-      run: direnv exec . go test -v -race -coverprofile=coverage.out ./...
-
-    - name: Run integration tests
-      env:
-        XDG_CONFIG_HOME: ${{ github.workspace }}/test-config
-      run: |
-        mkdir -p $XDG_CONFIG_HOME/.ctx/fragments
-        direnv exec . go test -v -tags=integration ./...
-
-    - name: Upload coverage to Codecov
-      if: matrix.go-version == '1.21'
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.out
-        flags: unittests
-        name: codecov-umbrella
-
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - name: Install direnv
+        run: |
+          curl -sfL https://direnv.net/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v6
+        with:
+          # restore and save a cache using this key
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock', 'go.sum') }}
+          # if there's no cache hit, restore a cache by this prefix
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          # collect garbage until the Nix store size (in bytes) is at most this number
+          # before trying to save a new cache
+          # 1G = 1073741824
+          gc-max-store-size-linux: 1G
+          # do purge caches
+          purge: true
+          # purge all versions of the cache
+          purge-prefixes: nix-${{ runner.os }}-
+          # created more than this number of seconds ago
+          purge-created: 0
+          # or, last accessed more than this number of seconds ago
+          # relative to the start of the `Post Restore and save Nix store` phase
+          purge-last-accessed: 0
+          # except any version with the key that is the same as the `primary-key`
+          purge-primary-key: never
+      - name: Allow direnv
+        run: direnv allow
+      - name: Download dependencies
+        run: direnv exec . go mod download
+      - name: Run unit tests
+        run: direnv exec . go test -v -race -coverprofile=coverage.out ./...
+      - name: Run integration tests
+        env:
+          XDG_CONFIG_HOME: ${{ github.workspace }}/test-config
+        run: |
+          mkdir -p $XDG_CONFIG_HOME/.ctx/fragments
+          direnv exec . go test -v -tags=integration ./...
+      - name: Upload coverage to Codecov
+        if: matrix.go-version == '1.21'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-
-    - name: Install direnv
-      run: |
-        curl -sfL https://direnv.net/install.sh | bash
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Cache Nix store
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/nix
-          /nix/var/nix/profiles
-          /nix/var/nix/gcroots
-        key: ${{ runner.os }}-nix-${{ hashFiles('flake.lock', 'go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-nix-
-
-    - name: Allow direnv
-      run: direnv allow
-
-    - name: golangci-lint
-      run: direnv exec . golangci-lint run --timeout=5m
-
-    - name: Check formatting
-      run: |
-        if [ "$(direnv exec . gofmt -s -l . | wc -l)" -gt 0 ]; then
-          echo "The following files are not formatted:"
-          direnv exec . gofmt -s -l .
-          exit 1
-        fi
-
-    - name: Go vet
-      run: direnv exec . go vet ./...
-
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - name: Install direnv
+        run: |
+          curl -sfL https://direnv.net/install.sh | bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v6
+        with:
+          # restore and save a cache using this key
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock', 'go.sum') }}
+          # if there's no cache hit, restore a cache by this prefix
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          # collect garbage until the Nix store size (in bytes) is at most this number
+          # before trying to save a new cache
+          # 1G = 1073741824
+          gc-max-store-size-linux: 1G
+          # do purge caches
+          purge: true
+          # purge all versions of the cache
+          purge-prefixes: nix-${{ runner.os }}-
+          # created more than this number of seconds ago
+          purge-created: 0
+          # or, last accessed more than this number of seconds ago
+          # relative to the start of the `Post Restore and save Nix store` phase
+          purge-last-accessed: 0
+          # except any version with the key that is the same as the `primary-key`
+          purge-primary-key: never
+      - name: Allow direnv
+        run: direnv allow
+      - name: golangci-lint
+        run: direnv exec . golangci-lint run --timeout=5m
+      - name: Check formatting
+        run: |
+          if [ "$(direnv exec . gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "The following files are not formatted:"
+            direnv exec . gofmt -s -l .
+            exit 1
+          fi
+      - name: Go vet
+        run: direnv exec . go vet ./...
   nix-build:
     name: Nix Build
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
-
-    - name: Cache Nix store
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/nix
-          /nix/var/nix/profiles
-          /nix/var/nix/gcroots
-        key: ${{ runner.os }}-nix-${{ hashFiles('flake.lock', 'go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-nix-
-
-    - name: Check flake
-      run: nix flake check
-
-    - name: Build package
-      run: nix build .#default
-
-    - name: Test built binary
-      run: |
-        ./result/bin/ctx --help
-        ./result/bin/ctx build --help
-
-    - name: Check flake.lock is up to date
-      run: |
-        nix flake update --commit-lock-file || true
-        if ! git diff --quiet flake.lock; then
-          echo "flake.lock is not up to date. Please run 'nix flake update' and commit the changes."
-          git diff flake.lock
-          exit 1
-        fi
-
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v6
+        with:
+          # restore and save a cache using this key
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock', 'go.sum') }}
+          # if there's no cache hit, restore a cache by this prefix
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          # collect garbage until the Nix store size (in bytes) is at most this number
+          # before trying to save a new cache
+          # 1G = 1073741824
+          gc-max-store-size-linux: 1G
+          # do purge caches
+          purge: true
+          # purge all versions of the cache
+          purge-prefixes: nix-${{ runner.os }}-
+          # created more than this number of seconds ago
+          purge-created: 0
+          # or, last accessed more than this number of seconds ago
+          # relative to the start of the `Post Restore and save Nix store` phase
+          purge-last-accessed: 0
+          # except any version with the key that is the same as the `primary-key`
+          purge-primary-key: never
+      - name: Check flake
+        run: nix flake check
+      - name: Build package
+        run: nix build .#default
+      - name: Test built binary
+        run: |
+          ./result/bin/ctx --help
+          ./result/bin/ctx build --help
+      - name: Check flake.lock is up to date
+        run: |
+          nix flake update --commit-lock-file || true
+          if ! git diff --quiet flake.lock; then
+            echo "flake.lock is not up to date. Please run 'nix flake update' and commit the changes."
+            git diff flake.lock
+            exit 1
+          fi
   build-cross-platform:
     name: Build Cross Platform
     runs-on: ubuntu-latest
@@ -160,30 +166,27 @@ jobs:
         exclude:
           - goos: windows
             goarch: arm64
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p dist
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then
+            EXT=".exe"
+          fi
+          go build -o dist/ctx-${{ matrix.goos }}-${{ matrix.goarch }}${EXT} ./cmd/ctx
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctx-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-
-    - name: Build binary
-      env:
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
-      run: |
-        mkdir -p dist
-        EXT=""
-        if [ "$GOOS" = "windows" ]; then
-          EXT=".exe"
-        fi
-        go build -o dist/ctx-${{ matrix.goos }}-${{ matrix.goarch }}${EXT} ./cmd/ctx
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: ctx-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: dist/
