@@ -20,5 +20,7 @@ module.exports = {
     'body-max-line-length': [0], // Disable body line length limit
     'footer-max-line-length': [0], // Disable footer line length limit
     'scope-empty': [0, 'never']
-  }
+  },
+  defaultIgnores: true,
+  ignores: [(commit) => commit.startsWith('Merge')]
 };
