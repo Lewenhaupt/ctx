@@ -17,15 +17,15 @@ Example command: ```ctx build --tags typescript, rust```
 - Always add documentation for all cli arguments, config flags, etc.
 - This tool will support many other cli tools with their different names and oddities for these types of files, we should include this in our code architecture such that there can be support for multiple "output formats"
 - Always add unit tests for all functionality you add, aim for at least full branch coverage
-- Write integration tests that test the full functionality, make sure XDG_CONFIG_DIR is overridden for the test execution such that the test-fragments can be part of the repository
+- Write integration tests that test the full functionality, make sure XDG_CONFIG_HOME is overridden for the test execution such that the test-fragments can be part of the repository
 
 ## NEVER DO
 - NEVER EVER ADD CODE ATTRIBUTIONS IN COMMIT DESCRIPTIONS THAT REFERENCES THE CLI TOOL!
 
 ## Features
-- Config location under XDG_CONFIG_DIR/.ctx/config.json
+- Config location under XDG_CONFIG_HOME/.ctx/config.json
     - Config can be overridden using --config-file cli argument
-- Files location for the fragments under XDG_CONFIG_DIR/.ctx/fragments
+- Files location for the fragments under XDG_CONFIG_HOME/.ctx/fragments
 - Default tags to include should be configurable in the context file and possible to override via a suitable cli argument
 - Config file should have a corresponding json schema describing it
 - The main flow of the tool will be:

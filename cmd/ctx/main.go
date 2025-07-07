@@ -45,7 +45,7 @@ and combine the matching fragments into a single output.`,
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&configFile, "config-file", "", "config file path (default: XDG_CONFIG_DIR/.ctx/config.json)")
+	rootCmd.PersistentFlags().StringVar(&configFile, "config-file", "", "config file path (default: XDG_CONFIG_HOME/.ctx/config.json)")
 
 	buildCmd.Flags().StringSliceVar(&tags, "tags", []string{}, "comma-separated list of tags to include")
 	buildCmd.Flags().BoolVar(&nonInteractive, "non-interactive", false, "run in non-interactive mode")

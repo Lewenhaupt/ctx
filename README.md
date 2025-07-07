@@ -181,7 +181,7 @@ Your markdown content here.
 ### Rules
 
 - Tags are comma-separated in the `ctx-tags` field
-- Frontmatter is optional (fragments without tags are still valid)
+- Frontmatter is optional 
 - Only `.md` and `.markdown` files are processed
 - Fragments are combined in the order they're found
 
@@ -196,7 +196,7 @@ Flags:
   --output-format strings    Output format(s) to use (e.g., opencode, gemini, custom)
   --output-file string       Output file path (overrides format-based naming)
   --stdout                   Output to stdout instead of files
-  --config-file string       Config file path (default: XDG_CONFIG_DIR/.ctx/config.json)
+  --config-file string       Config file path (default: XDG_CONFIG_HOME/.ctx/config.json)
   -h, --help                Help for build
 ```
 

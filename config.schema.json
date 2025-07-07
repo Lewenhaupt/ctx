@@ -28,7 +28,7 @@
     },
     "fragments_dir": {
       "type": "string",
-      "description": "Custom path to the fragments directory (defaults to XDG_CONFIG_DIR/.ctx/fragments)"
+      "description": "Custom path to the fragments directory (defaults to XDG_CONFIG_HOME/.ctx/fragments)"
     },
     "custom_settings": {
       "type": "object",
@@ -37,3 +37,4 @@
   },
   "additionalProperties": false
 }
+
