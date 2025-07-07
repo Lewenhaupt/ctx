@@ -1,0 +1,111 @@
+name: Lint Commit Messages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  commitlint:
+    name: Lint Commit Messages
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install commitlint
+      run: |
+        npm install -g @commitlint/cli @commitlint/config-conventional
+
+    - name: Create commitlint config
+      run: |
+        cat > commitlint.config.js << 'EOF'
+        module.exports = {
+          extends: ['@commitlint/config-conventional'],
+          rules: {
+            'type-enum': [2, 'always', [
+              'feat',
+              'fix', 
+              'docs',
+              'style',
+              'refactor',
+              'test',
+              'chore'
+            ]],
+            'subject-case': [2, 'always', 'sentence-case'],
+            'subject-empty': [2, 'never'],
+            'subject-full-stop': [2, 'never', '.'],
+            'body-leading-blank': [1, 'always'],
+            'footer-leading-blank': [1, 'always'],
+            // Custom rule: no code attributions in commit messages
+            'body-max-line-length': [0],
+            'footer-max-line-length': [0]
+          },
+          plugins: [
+            {
+              rules: {
+                'no-code-attribution': (parsed) => {
+                  const message = parsed.raw.toLowerCase();
+                  const hasAttribution = message.includes('co-authored-by') || 
+                                       message.includes('authored-by') ||
+                                       message.includes('generated with');
+                  
+                  // Allow opencode attribution as it's required
+                  const hasOpenCodeAttribution = message.includes('generated with [opencode]');
+                  
+                  if (hasAttribution && !hasOpenCodeAttribution) {
+                    return [false, 'Commit messages should not contain code attributions (except opencode)'];
+                  }
+                  return [true];
+                }
+              }
+            }
+          ]
+        };
+        EOF
+
+    - name: Lint commit messages
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          # For PRs, check all commits in the PR
+          commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+        else
+          # For pushes, check the last commit
+          commitlint --from HEAD~1 --to HEAD --verbose
+        fi
+
+    - name: Check commit message format
+      run: |
+        # Additional custom checks for our specific format requirements
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          COMMITS=$(git log --format="%s" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+        else
+          COMMITS=$(git log --format="%s" -1)
+        fi
+        
+        echo "Checking commit messages:"
+        echo "$COMMITS"
+        
+        # Check each commit message
+        echo "$COMMITS" | while IFS= read -r commit; do
+          if [ -n "$commit" ]; then
+            # Check format: type: description
+            if ! echo "$commit" | grep -qE '^(feat|fix|docs|style|refactor|test|chore): .+'; then
+              echo "❌ Invalid commit format: $commit"
+              echo "Expected format: 'type: description'"
+              echo "Allowed types: feat, fix, docs, style, refactor, test, chore"
+              exit 1
+            else
+              echo "✅ Valid commit format: $commit"
+            fi
+          fi
+        done
