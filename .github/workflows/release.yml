@@ -166,7 +166,7 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "VERSION_NO_V=${VERSION#v}" >> $GITHUB_OUTPUT
+          echo "VERSION_NO_V=${VERSION#v.}" >> $GITHUB_OUTPUT
       - name: Update flake.nix version and get new vendorHash
         run: "VERSION=\"${{ steps.version.outputs.VERSION_NO_V }}\"\n\n# Update version in flake.nix\nsed -i \"s/version = \\\".*\\\"/version = \\\"$VERSION\\\"/\" flake.nix\n\n# Try to build to get the correct vendorHash\necho \"Building to determine vendorHash...\"\nset +e\nBUILD_OUTPUT=$(nix build .#default 2>&1)\nBUILD_EXIT_CODE=$?\nset -e\n\nif [ $BUILD_EXIT_CODE -ne 0 ]; then\n  # Extract the expected hash from the error message\n  NEW_HASH=$(echo \"$BUILD_OUTPUT\" | grep -o \"got:.*sha256-[A-Za-z0-9+/=]*\" | sed 's/got:[[:space:]]*//')\n  \n  if [ -n \"$NEW_HASH\" ]; then\n    echo \"Updating vendorHash to: $NEW_HASH\"\n    sed -i \"s/vendorHash = \\\".*\\\"/vendorHash = \\\"$NEW_HASH\\\"/\" flake.nix\n    \n    # Try building again to verify\n    echo \"Verifying build with new vendorHash...\"\n    nix build .#default\n  else\n    echo \"Could not extract vendorHash from build output\"\n    echo \"Build output:\"\n    echo \"$BUILD_OUTPUT\"\n    exit 1\n  fi\nelse\n  echo \"Build succeeded, no vendorHash update needed\"\nfi\n"
       - name: Test updated flake
