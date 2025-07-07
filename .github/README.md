@@ -77,13 +77,12 @@ Automated dependency updates for:
 ## Caching
 
 - Go modules cache for faster builds
-- Nix store cache (requires CACHIX_AUTH_TOKEN secret)
+- Nix store cache using GitHub Actions cache
 - Cross-platform build artifacts
 
 ## Required Secrets
 
 - `GITHUB_TOKEN`: Automatically provided by GitHub
-- `CACHIX_AUTH_TOKEN`: Optional, for Nix cache (improves build speed)
 
 ## Customization
 
@@ -91,5 +90,5 @@ To customize for your repository:
 
 1. Update `dependabot.yml` with your GitHub username
 2. Add your username to workflow reviewers/assignees
-3. Configure Cachix if desired for faster Nix builds
-4. Adjust Go version matrix in CI if needed
+3. Adjust Go version matrix in CI if needed
+4. Configure additional caching strategies if desired
