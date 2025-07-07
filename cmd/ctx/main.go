@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Lewenhaupt/ctx/internal/tui"
 	"github.com/spf13/cobra"
-	"github.com/user/ctx/internal/tui"
 )
 
 var (

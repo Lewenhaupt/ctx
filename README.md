@@ -19,13 +19,13 @@ A CLI tool for combining markdown fragments based on tags. Split your documentat
 
 ```bash
 # Install directly from the repository
-nix profile install github:user/ctx
+nix profile install github:Lewenhaupt/ctx
 
 # Or run without installing
-nix run github:user/ctx -- build --help
+nix run github:Lewenhaupt/ctx -- build --help
 
 # For faster builds, you can also use the binary cache (if available)
-# nix profile install github:user/ctx --extra-substituters https://cache.nixos.org
+# nix profile install github:Lewenhaupt/ctx --extra-substituters https://cache.nixos.org
 ```
 
 #### Option 2: Using Nix Flakes in your project
@@ -36,7 +36,7 @@ Add to your `flake.nix`:
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    ctx.url = "github:user/ctx";
+    ctx.url = "github:Lewenhaupt/ctx";
   };
 
   outputs = { self, nixpkgs, ctx, ... }:
@@ -71,7 +71,7 @@ Add to your NixOS configuration:
 ```nix
 # configuration.nix or flake.nix
 {
-  inputs.ctx.url = "github:user/ctx";
+  inputs.ctx.url = "github:Lewenhaupt/ctx";
   
   # In your system configuration:
   environment.systemPackages = [
@@ -99,7 +99,7 @@ go build -o ctx ./cmd/ctx
 ### Using Go
 
 ```bash
-go install github.com/user/ctx/cmd/ctx@latest
+go install github.com/Lewenhaupt/ctx/cmd/ctx@latest
 ```
 
 ## Quick Start

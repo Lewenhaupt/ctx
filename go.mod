@@ -1,4 +1,4 @@
-module github.com/user/ctx
+module github.com/Lewenhaupt/ctx
 
 go 1.24.4
 

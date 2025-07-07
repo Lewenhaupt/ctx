@@ -180,6 +180,7 @@ jobs:
             **Note**: This PR can be safely merged if CI passes.
           branch: update-flake-${{ steps.version.outputs.VERSION }}
           delete-branch: true
+          base: main
           labels: |
             automated
             release
@@ -212,4 +213,3 @@ jobs:
           echo "### 🔄 Next Steps:"
           echo "- Review and merge the flake.nix update PR"
           echo "- Announce the release"
-

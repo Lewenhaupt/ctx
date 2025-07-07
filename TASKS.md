@@ -3,7 +3,7 @@
 This file outlines the tasks required to build the `ctx` CLI tool.
 
 ## 1. Project Scaffolding & Setup ✅
-- [x] Initialize Go module: `go mod init github.com/user/ctx`
+- [x] Initialize Go module: `go mod init github.com/Lewenhaupt/ctx`
 - [x] Set up basic project structure:
   ```
   .

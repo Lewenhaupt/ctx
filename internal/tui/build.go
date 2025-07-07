@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Lewenhaupt/ctx/internal/config"
+	"github.com/Lewenhaupt/ctx/internal/parser"
 	"github.com/charmbracelet/huh"
-	"github.com/user/ctx/internal/config"
-	"github.com/user/ctx/internal/parser"
 )
 
 // BuildOptions represents the options for the build command.

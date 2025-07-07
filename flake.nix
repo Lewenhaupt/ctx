@@ -33,7 +33,7 @@
 
           meta = with pkgs.lib; {
             description = "A CLI tool for combining markdown fragments based on tags";
-            homepage = "https://github.com/user/ctx";
+            homepage = "https://github.com/Lewenhaupt/ctx";
             license = licenses.mit; # Update with actual license
             maintainers = [ ];
             mainProgram = "ctx";
