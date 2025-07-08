@@ -68,6 +68,7 @@ func TestDetermineSelectedTags(t *testing.T) {
 				if err == nil {
 					t.Error("Expected error, got nil")
 				}
+
 				return
 			}
 
@@ -88,17 +89,20 @@ func TestLoadConfigAndFragments(t *testing.T) {
 
 	// Set XDG_CONFIG_HOME to our temp directory
 	oldXDGConfigHome := os.Getenv("XDG_CONFIG_HOME")
+
 	defer func() {
 		if oldXDGConfigHome != "" {
-			os.Setenv("XDG_CONFIG_HOME", oldXDGConfigHome)
+			_ = os.Setenv("XDG_CONFIG_HOME", oldXDGConfigHome)
 		} else {
-			os.Unsetenv("XDG_CONFIG_HOME")
+			_ = os.Unsetenv("XDG_CONFIG_HOME")
 		}
 	}()
-	os.Setenv("XDG_CONFIG_HOME", tmpDir)
+
+	_ = os.Setenv("XDG_CONFIG_HOME", tmpDir)
 
 	// Create config directory and file
 	configDir := filepath.Join(tmpDir, ".ctx")
+
 	err := os.MkdirAll(configDir, 0o750)
 	if err != nil {
 		t.Fatalf("Failed to create config directory: %v", err)
@@ -111,6 +115,7 @@ func TestLoadConfigAndFragments(t *testing.T) {
 		}
 	}`
 	configPath := filepath.Join(configDir, "config.json")
+
 	err = os.WriteFile(configPath, []byte(configContent), 0o600)
 	if err != nil {
 		t.Fatalf("Failed to create config file: %v", err)
@@ -118,6 +123,7 @@ func TestLoadConfigAndFragments(t *testing.T) {
 
 	// Create fragments directory and files
 	fragmentsDir := filepath.Join(configDir, "fragments")
+
 	err = os.MkdirAll(fragmentsDir, 0o750)
 	if err != nil {
 		t.Fatalf("Failed to create fragments directory: %v", err)
@@ -131,6 +137,7 @@ ctx-tags: typescript, testing
 This is a test fragment.
 `
 	fragmentPath := filepath.Join(fragmentsDir, "test.md")
+
 	err = os.WriteFile(fragmentPath, []byte(fragmentContent), 0o600)
 	if err != nil {
 		t.Fatalf("Failed to create fragment file: %v", err)
@@ -235,6 +242,7 @@ func TestDetermineOutputFormats(t *testing.T) {
 				if err == nil {
 					t.Error("Expected error, got nil")
 				}
+
 				return
 			}
 
@@ -259,10 +267,8 @@ func TestDetermineOutputFormats(t *testing.T) {
 						t.Errorf("Expected format %s not found in result", expected)
 					}
 				}
-			} else {
-				if !reflect.DeepEqual(formats, tt.expectedFormats) {
-					t.Errorf("Expected formats %v, got %v", tt.expectedFormats, formats)
-				}
+			} else if !reflect.DeepEqual(formats, tt.expectedFormats) {
+				t.Errorf("Expected formats %v, got %v", tt.expectedFormats, formats)
 			}
 
 			if !reflect.DeepEqual(files, tt.expectedFiles) {

@@ -163,6 +163,7 @@ func selectTags(allTags, defaultTags []string) ([]string, error) {
 	}
 
 	var selectedTags []string
+
 	for _, tag := range allTags {
 		if defaultTagsMap[tag] {
 			selectedTags = append(selectedTags, tag)
@@ -186,6 +187,7 @@ func selectTags(allTags, defaultTags []string) ([]string, error) {
 					if len(val) == 0 {
 						return fmt.Errorf("at least one tag must be selected")
 					}
+
 					return nil
 				}),
 		),
