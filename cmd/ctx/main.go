@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Lewenhaupt/ctx/internal/config"
+	"github.com/Lewenhaupt/ctx/internal/parser"
 	"github.com/Lewenhaupt/ctx/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -44,6 +46,70 @@ and combine the matching fragments into a single output.`,
 	},
 }
 
+var completionCmd = &cobra.Command{
+	Use:   "completion [bash|zsh|fish|powershell]",
+	Short: "Generate completion script",
+	Long: `To load completions:
+
+Bash:
+
+  $ source <(ctx completion bash)
+
+  # To load completions for each session, execute once:
+  # Linux:
+  $ ctx completion bash > /etc/bash_completion.d/ctx
+  # macOS:
+  $ ctx completion bash > $(brew --prefix)/etc/bash_completion.d/ctx
+
+Zsh:
+
+  # If shell completion is not already enabled in your environment,
+  # you will need to enable it.  You can execute the following once:
+
+  $ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+  # To load completions for each session, execute once:
+  $ ctx completion zsh > "${fpath[1]}/_ctx"
+
+  # You will need to start a new shell for this setup to take effect.
+
+Fish:
+
+  $ ctx completion fish | source
+
+  # To load completions for each session, execute once:
+  $ ctx completion fish > ~/.config/fish/completions/ctx.fish
+
+PowerShell:
+
+  PS> ctx completion powershell | Out-String | Invoke-Expression
+
+  # To load completions for every new session, run:
+  PS> ctx completion powershell > ctx.ps1
+  # and source this file from your PowerShell profile.
+`,
+	DisableFlagsInUseLine: true,
+	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
+	Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+	Run: func(cmd *cobra.Command, args []string) {
+		var err error
+		switch args[0] {
+		case "bash":
+			err = cmd.Root().GenBashCompletion(os.Stdout)
+		case "zsh":
+			err = cmd.Root().GenZshCompletion(os.Stdout)
+		case "fish":
+			err = cmd.Root().GenFishCompletion(os.Stdout, true)
+		case "powershell":
+			err = cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error generating completion: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	rootCmd.PersistentFlags().StringVar(&configFile, "config-file", "", "config file path (default: XDG_CONFIG_HOME/.ctx/config.json)")
 
@@ -53,7 +119,42 @@ func init() {
 	buildCmd.Flags().StringVar(&outputFile, "output-file", "", "output file path (overrides format-based naming)")
 	buildCmd.Flags().BoolVar(&stdout, "stdout", false, "output to stdout instead of files")
 
+	// Add custom completion for tags flag
+	if err := buildCmd.RegisterFlagCompletionFunc("tags", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return getAvailableTags(), cobra.ShellCompDirectiveNoFileComp
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Error registering tags completion: %v\n", err)
+	}
+
+	// Add custom completion for output-format flag
+	if err := buildCmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{"opencode", "gemini", "custom"}, cobra.ShellCompDirectiveNoFileComp
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Error registering output-format completion: %v\n", err)
+	}
+
 	rootCmd.AddCommand(buildCmd)
+	rootCmd.AddCommand(completionCmd)
+}
+
+// getAvailableTags returns all available tags from fragments for completion.
+func getAvailableTags() []string {
+	cfg, err := config.LoadConfig(configFile)
+	if err != nil {
+		return []string{}
+	}
+
+	fragmentsDir, err := config.GetFragmentsDir(cfg)
+	if err != nil {
+		return []string{}
+	}
+
+	fragments, err := parser.ScanFragments(fragmentsDir)
+	if err != nil {
+		return []string{}
+	}
+
+	return parser.GetAllTags(fragments)
 }
 
 func main() {
