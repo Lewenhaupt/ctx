@@ -76,9 +76,9 @@ func createTestConfig(t *testing.T, tmpDir string) {
 	}
 
 	configContent := `{
-		"default_tags": ["general"],
-		"fragments_dir": "` + fragmentsDir + `",
-		"output_formats": {
+		"defaultTags": ["general"],
+		"fragmentsDir": "` + fragmentsDir + `",
+		"outputFormats": {
 			"opencode": "AGENTS.md"
 		}
 	}`
