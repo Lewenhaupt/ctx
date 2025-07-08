@@ -156,49 +156,40 @@ func handleOutput(opts *BuildOptions, output string, selectedOutputFormats, outp
 
 // selectTags presents an interactive multi-select for tag selection.
 func selectTags(allTags, defaultTags []string) ([]string, error) {
-	var selectedTags []string
-
-	// Create options for multi-select
-	options := make([]huh.Option[string], len(allTags))
-
-	for i, tag := range allTags {
-		options[i] = huh.NewOption(tag, tag)
-	}
-
-	// Pre-select default tags
+	// Pre-select default tags that exist in allTags
 	defaultTagsMap := make(map[string]bool)
 	for _, tag := range defaultTags {
 		defaultTagsMap[tag] = true
 	}
 
-	var preSelected []string
-
+	var selectedTags []string
 	for _, tag := range allTags {
 		if defaultTagsMap[tag] {
-			preSelected = append(preSelected, tag)
+			selectedTags = append(selectedTags, tag)
 		}
+	}
+
+	// Create options for multi-select
+	options := make([]huh.Option[string], len(allTags))
+	for i, tag := range allTags {
+		options[i] = huh.NewOption(tag, tag)
 	}
 
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewMultiSelect[string]().
 				Title("Select tags to include:").
+				Description("Use space to toggle selection, enter to confirm").
 				Options(options...).
 				Value(&selectedTags).
 				Validate(func(val []string) error {
 					if len(val) == 0 {
 						return fmt.Errorf("at least one tag must be selected")
 					}
-
 					return nil
 				}),
 		),
 	)
-
-	// Set pre-selected values
-	if len(preSelected) > 0 {
-		selectedTags = preSelected
-	}
 
 	err := form.Run()
 	if err != nil {
