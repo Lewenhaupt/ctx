@@ -35,8 +35,8 @@ func TestLoadConfig(t *testing.T) {
 		{
 			name: "valid config",
 			configContent: `{
-				"default_tags": ["typescript", "rust"],
-				"output_formats": {
+				"defaultTags": ["typescript", "rust"],
+				"outputFormats": {
 					"custom": "CUSTOM.md"
 				}
 			}`,

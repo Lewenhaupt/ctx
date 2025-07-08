@@ -9,10 +9,10 @@ import (
 
 // Config represents the application configuration.
 type Config struct {
-	DefaultTags    []string               `json:"default_tags"`
-	OutputFormats  map[string]string      `json:"output_formats"`
-	FragmentsDir   string                 `json:"fragments_dir,omitempty"`
-	CustomSettings map[string]interface{} `json:"custom_settings,omitempty"`
+	DefaultTags    []string               `json:"defaultTags"`
+	OutputFormats  map[string]string      `json:"outputFormats"`
+	FragmentsDir   string                 `json:"fragmentsDir,omitempty"`
+	CustomSettings map[string]interface{} `json:"customSettings,omitempty"`
 }
 
 // DefaultConfig returns a default configuration.

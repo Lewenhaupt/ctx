@@ -142,14 +142,14 @@ Configuration is stored in `~/.config/.ctx/config.json` (or `$XDG_CONFIG_HOME/.c
 
 ```json
 {
-  "default_tags": ["general", "coding"],
-  "output_formats": {
+  "defaultTags": ["general", "coding"],
+  "outputFormats": {
     "opencode": "AGENTS.md",
     "gemini": "GEMINI.md",
     "custom": "CUSTOM.md"
   },
-  "fragments_dir": "/custom/path/to/fragments",
-  "custom_settings": {
+  "fragmentsDir": "/custom/path/to/fragments",
+  "customSettings": {
     "max_fragments": 50
   }
 }
@@ -159,10 +159,10 @@ Configuration is stored in `~/.config/.ctx/config.json` (or `$XDG_CONFIG_HOME/.c
 
 The configuration follows the JSON schema defined in `config.schema.json`:
 
-- `default_tags`: Array of tags to pre-select in interactive mode
-- `output_formats`: Mapping of format names to output filenames
-- `fragments_dir`: Custom path to fragments directory (optional)
-- `custom_settings`: Additional settings for specific workflows
+- `defaultTags`: Array of tags to pre-select in interactive mode
+- `outputFormats`: Mapping of format names to output filenames
+- `fragmentsDir`: Custom path to fragments directory (optional)
+- `customSettings`: Additional settings for specific workflows
 
 ## Fragment Format
 

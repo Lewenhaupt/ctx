@@ -4,14 +4,14 @@
   "description": "Configuration schema for the ctx markdown splicing tool",
   "type": "object",
   "properties": {
-    "default_tags": {
+    "defaultTags": {
       "type": "array",
       "items": {
         "type": "string"
       },
       "description": "Default tags to include when building fragments"
     },
-    "output_formats": {
+    "outputFormats": {
       "type": "object",
       "patternProperties": {
         "^[a-zA-Z0-9_-]+$": {
@@ -26,11 +26,11 @@
         }
       ]
     },
-    "fragments_dir": {
+    "fragmentsDir": {
       "type": "string",
       "description": "Custom path to the fragments directory (defaults to XDG_CONFIG_HOME/.ctx/fragments)"
     },
-    "custom_settings": {
+    "customSettings": {
       "type": "object",
       "description": "Additional custom settings for specific tools or workflows"
     }
