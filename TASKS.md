@@ -69,4 +69,5 @@ The `ctx` CLI tool has been successfully implemented with all core features:
 - [ ] Add support for nested fragment directories
 - [ ] Implement fragment validation and linting
 - [ ] Add support for custom output templates
-- [ ] Create shell completion scripts
+- [x] Pre-select default tags from configuration in the interactive tag selection view. If a user deselects a default tag, it should not be included in the final selection.
+- [x] Create shell completion scripts
