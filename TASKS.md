@@ -71,3 +71,14 @@ The `ctx` CLI tool has been successfully implemented with all core features:
 - [ ] Add support for custom output templates
 - [x] Pre-select default tags from configuration in the interactive tag selection view. If a user deselects a default tag, it should not be included in the final selection.
 - [x] Create shell completion scripts
+
+## 7. Interactive Init Command ✅
+- [x] Create a new `init` command in Cobra CLI framework
+- [x] Implement interactive questionnaire with 3 questions:
+  - [x] "Do you want to add additional output formats?" (shows default formats)
+  - [x] "Where would you like to store your fragments? (default: ./fragments)"
+  - [x] "Would you like to create a sample fragment to start?"
+- [x] Implement configuration generation based on user answers
+- [x] Create sample fragment generation functionality
+- [x] Write comprehensive unit tests for the init command
+- [x] Handle existing configuration file overwrite confirmation
