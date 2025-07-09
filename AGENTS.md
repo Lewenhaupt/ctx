@@ -18,6 +18,7 @@ Example command: ```ctx build --tags typescript, rust```
 - This tool will support many other cli tools with their different names and oddities for these types of files, we should include this in our code architecture such that there can be support for multiple "output formats"
 - Always add unit tests for all functionality you add, aim for at least full branch coverage
 - Write integration tests that test the full functionality, make sure XDG_CONFIG_HOME is overridden for the test execution such that the test-fragments can be part of the repository
+- Always run linters with `--fix` or similar flags to automatically use safe fixes
 
 ## Git
 - Always start new features in a feature branch `feat/<some-name>`

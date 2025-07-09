@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/Lewenhaupt/ctx/internal/config"
@@ -124,7 +125,7 @@ func TestCreateSampleFragment(t *testing.T) {
 		t.Fatalf("Failed to read sample fragment: %v", err)
 	}
 
-	expectedContent := "ctx-tags: hello, world, sample"
+	expectedContent := "ctx-tags: [hello, world, sample]"
 	if !contains(string(content), expectedContent) {
 		t.Errorf("Sample fragment does not contain expected ctx-tags header")
 	}
@@ -191,6 +192,61 @@ func TestGenerateConfigWithInvalidPath(t *testing.T) {
 	expectedPath, _ := filepath.Abs("/nonexistent/very/deep/path/that/should/not/exist")
 	if cfg.FragmentsDir != expectedPath {
 		t.Errorf("Expected fragments dir %s, got %s", expectedPath, cfg.FragmentsDir)
+	}
+}
+
+func TestCreateConfigBackup(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.json")
+
+	// Create original config file
+	originalContent := `{"defaultTags": ["test"], "outputFormats": {"test": "TEST.md"}}`
+
+	err := os.WriteFile(configPath, []byte(originalContent), 0o600)
+	if err != nil {
+		t.Fatalf("Failed to create test config file: %v", err)
+	}
+
+	// Create backup
+	err = createConfigBackup(configPath)
+	if err != nil {
+		t.Fatalf("createConfigBackup failed: %v", err)
+	}
+
+	// Check that backup file was created
+	files, err := os.ReadDir(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to read directory: %v", err)
+	}
+
+	var backupFound bool
+
+	var backupPath string
+
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), "config.json.bak.") {
+			backupFound = true
+			backupPath = filepath.Join(tmpDir, file.Name())
+
+			break
+		}
+	}
+
+	if !backupFound {
+		t.Error("Backup file was not created")
+	}
+
+	// Verify backup content matches original
+	if backupPath != "" {
+		backupContent, err := os.ReadFile(backupPath)
+		if err != nil {
+			t.Fatalf("Failed to read backup file: %v", err)
+		}
+
+		if string(backupContent) != originalContent {
+			t.Errorf("Backup content doesn't match original. Expected: %s, Got: %s",
+				originalContent, string(backupContent))
+		}
 	}
 }
 
