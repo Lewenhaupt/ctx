@@ -45,6 +45,51 @@ func ScanFragments(fragmentsDir string) ([]Fragment, error) {
 	return fragments, err
 }
 
+// ScanLocalFragments scans the local .ctx/fragments directory in the current working directory.
+func ScanLocalFragments() ([]Fragment, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
+	localFragmentsDir := filepath.Join(cwd, ".ctx", "fragments")
+	return ScanFragments(localFragmentsDir)
+}
+
+// CombineFragments combines global and local fragments, with optional override logic.
+// If noLocalOverride is false (default), local fragments with the same filename will override global ones.
+// If noLocalOverride is true, both local and global fragments will be included.
+func CombineFragments(globalFragments, localFragments []Fragment, noLocalOverride bool) []Fragment {
+	if noLocalOverride {
+		// Include both global and local fragments
+		combined := make([]Fragment, 0, len(globalFragments)+len(localFragments))
+		combined = append(combined, globalFragments...)
+		combined = append(combined, localFragments...)
+		return combined
+	}
+
+	// Create a map of local fragments by filename for override logic
+	localByFilename := make(map[string]Fragment)
+	for _, fragment := range localFragments {
+		filename := filepath.Base(fragment.Path)
+		localByFilename[filename] = fragment
+	}
+
+	// Start with local fragments
+	combined := make([]Fragment, 0, len(globalFragments)+len(localFragments))
+	combined = append(combined, localFragments...)
+
+	// Add global fragments that don't have local overrides
+	for _, fragment := range globalFragments {
+		filename := filepath.Base(fragment.Path)
+		if _, exists := localByFilename[filename]; !exists {
+			combined = append(combined, fragment)
+		}
+	}
+
+	return combined
+}
+
 // ParseFragment parses a single markdown file and extracts ctx-tags and content.
 func ParseFragment(filePath string) (*Fragment, error) {
 	file, err := os.Open(filePath)

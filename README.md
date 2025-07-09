@@ -9,6 +9,7 @@ A CLI tool for combining markdown fragments based on tags. Split your documentat
 - **Non-interactive mode**: Automate builds with command-line flags
 - **Configurable**: JSON configuration with schema validation
 - **Multiple output formats**: Support for different AI tools (opencode, gemini, etc.)
+- **Project-specific fragments**: Local `.ctx/fragments` directory support with override logic
 - **Reproducible builds**: Generate command files for replication
 
 ## Installation
@@ -222,6 +223,68 @@ Your markdown content here.
 - Only `.md` and `.markdown` files are processed
 - Fragments are combined in the order they're found
 
+## Project-Specific Fragments
+
+In addition to global fragments stored in your configuration directory, `ctx` supports project-specific fragments stored in a local `.ctx/fragments` directory within your project.
+
+### Local Fragment Directory
+
+Create a `.ctx/fragments` directory in your project root:
+
+```bash
+mkdir -p .ctx/fragments
+```
+
+Add project-specific fragments:
+
+```bash
+# .ctx/fragments/project-rules.md
+---
+ctx-tags: project, rules, local
+---
+
+# Project-Specific Rules
+
+These rules apply only to this project.
+```
+
+### Override Behavior
+
+By default, local fragments override global fragments with the same filename:
+
+- **Global**: `~/.config/.ctx/fragments/common.md`
+- **Local**: `./.ctx/fragments/common.md`
+- **Result**: Local `common.md` is used, global is ignored
+
+### Including Both Local and Global
+
+Use the `--no-local-override` flag to include both local and global fragments:
+
+```bash
+# Include both local and global fragments with the same name
+ctx build --no-local-override --tags common
+```
+
+### Examples
+
+```bash
+# Build using both global and local fragments (default override behavior)
+ctx build --tags project,general
+
+# Build including both local and global fragments with same names
+ctx build --tags common --no-local-override
+
+# Build only local fragments
+ctx build --tags local,project
+```
+
+### Use Cases
+
+- **Project documentation**: Store project-specific context in `.ctx/fragments`
+- **Team overrides**: Override global rules with project-specific ones
+- **Environment-specific configs**: Different fragments for different projects
+- **Version control**: Commit local fragments with your project
+
 ## CLI Commands
 
 ### Initialize Configuration
@@ -245,6 +308,7 @@ Flags:
   --output-format strings    Output format(s) to use (e.g., opencode, gemini, custom)
   --output-file string       Output file path (overrides format-based naming)
   --stdout                   Output to stdout instead of files
+  --no-local-override        Include both local and global fragments even if they have the same name
   --config-file string       Config file path (default: XDG_CONFIG_HOME/.ctx/config.json)
   -h, --help                Help for build
 ```
