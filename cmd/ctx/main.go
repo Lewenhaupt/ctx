@@ -46,6 +46,20 @@ and combine the matching fragments into a single output.`,
 	},
 }
 
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "Initialize ctx configuration interactively",
+	Long: `Initialize ctx configuration with an interactive questionnaire.
+This command will guide you through setting up your ctx configuration,
+creating the fragments directory, and optionally creating a sample fragment.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		opts := tui.InitOptions{
+			ConfigFile: configFile,
+		}
+		return tui.RunInit(&opts)
+	},
+}
+
 var completionCmd = &cobra.Command{
 	Use:   "completion [bash|zsh|fish|powershell]",
 	Short: "Generate completion script",
@@ -133,6 +147,7 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Error registering output-format completion: %v\n", err)
 	}
 
+	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(buildCmd)
 	rootCmd.AddCommand(completionCmd)
 }
