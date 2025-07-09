@@ -41,6 +41,10 @@
         };
 
         devShells.default = pkgs.mkShell {
+          shellHook = ''
+            export CGO_ENABLED="1"
+          '';
+
           packages = [
             # go
             pkgs.go
@@ -56,6 +60,7 @@
             pkgs.nodePackages.npm
 
             # System libraries
+            pkgs.gcc
 
             # Additional tools that might be useful
             pkgs.lld
