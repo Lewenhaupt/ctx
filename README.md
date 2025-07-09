@@ -238,14 +238,14 @@ mkdir -p .ctx/fragments
 Add project-specific fragments:
 
 ```bash
-# .ctx/fragments/project-rules.md
+# .ctx/fragments/api-guidelines.md
 ---
-ctx-tags: project, rules, local
+ctx-tags: api, guidelines, backend
 ---
 
-# Project-Specific Rules
+# API Guidelines
 
-These rules apply only to this project.
+These guidelines apply specifically to this project's API.
 ```
 
 ### Override Behavior
@@ -269,13 +269,13 @@ ctx build --no-local-override --tags common
 
 ```bash
 # Build using both global and local fragments (default override behavior)
-ctx build --tags project,general
+ctx build --tags api,backend
 
 # Build including both local and global fragments with same names
 ctx build --tags common --no-local-override
 
-# Build only local fragments
-ctx build --tags local,project
+# Build with tags that might exist in both global and local fragments
+ctx build --tags guidelines,typescript
 ```
 
 ### Use Cases

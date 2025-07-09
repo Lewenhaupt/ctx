@@ -53,6 +53,7 @@ func ScanLocalFragments() ([]Fragment, error) {
 	}
 
 	localFragmentsDir := filepath.Join(cwd, ".ctx", "fragments")
+
 	return ScanFragments(localFragmentsDir)
 }
 
@@ -65,11 +66,13 @@ func CombineFragments(globalFragments, localFragments []Fragment, noLocalOverrid
 		combined := make([]Fragment, 0, len(globalFragments)+len(localFragments))
 		combined = append(combined, globalFragments...)
 		combined = append(combined, localFragments...)
+
 		return combined
 	}
 
 	// Create a map of local fragments by filename for override logic
 	localByFilename := make(map[string]Fragment)
+
 	for _, fragment := range localFragments {
 		filename := filepath.Base(fragment.Path)
 		localByFilename[filename] = fragment
