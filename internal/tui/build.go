@@ -146,12 +146,43 @@ func handleOutput(opts *BuildOptions, output string, selectedOutputFormats, outp
 		return nil
 	}
 
-	err := writeOutputFiles(output, selectedOutputFormats, outputFiles, cfg)
+	err := writeOutputFiles(opts, output, selectedOutputFormats, outputFiles, cfg)
 	if err != nil {
 		return fmt.Errorf("failed to write output files: %w", err)
 	}
 
 	return nil
+}
+
+// handleFileOverwrite handles the case when an output file already exists.
+// Returns "overwrite", "skip", or "cancel" based on user choice.
+func handleFileOverwrite(opts *BuildOptions, filename, format string) (string, error) {
+	// In non-interactive mode, always overwrite
+	if opts.NonInteractive {
+		return "overwrite", nil
+	}
+
+	var choice string
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title(fmt.Sprintf("File already exists: %s", filename)).
+				Description(fmt.Sprintf("The output file for format '%s' already exists. What would you like to do?", format)).
+				Options(
+					huh.NewOption("Overwrite the existing file", "overwrite"),
+					huh.NewOption("Skip this output format", "skip"),
+					huh.NewOption("Cancel the build", "cancel"),
+				).
+				Value(&choice),
+		),
+	)
+
+	if err := form.Run(); err != nil {
+		return "", err
+	}
+
+	return choice, nil
 }
 
 // selectTags presents an interactive multi-select for tag selection.
@@ -272,7 +303,7 @@ func confirmBuild(fragments []parser.Fragment, selectedTags, outputFormats []str
 }
 
 // writeOutputFiles writes the output to the specified files based on formats.
-func writeOutputFiles(output string, formats, customFiles []string, cfg *config.Config) error {
+func writeOutputFiles(opts *BuildOptions, output string, formats, customFiles []string, cfg *config.Config) error {
 	for i, format := range formats {
 		var filename string
 
@@ -285,6 +316,26 @@ func writeOutputFiles(output string, formats, customFiles []string, cfg *config.
 			filename = outputFile
 		} else {
 			return fmt.Errorf("unknown output format: %s", format)
+		}
+
+		// Check if file already exists and handle overwrite
+		if _, err := os.Stat(filename); err == nil {
+			// File exists, check what to do
+			action, err := handleFileOverwrite(opts, filename, format)
+			if err != nil {
+				return fmt.Errorf("failed to handle file overwrite for %s: %w", filename, err)
+			}
+
+			switch action {
+			case "cancel":
+				fmt.Println("Build cancelled.")
+				return fmt.Errorf("build cancelled by user")
+			case "skip":
+				fmt.Printf("Skipping output format: %s (file %s already exists)\n", format, filename)
+				continue
+			case "overwrite":
+				// Continue with writing the file
+			}
 		}
 
 		// Ensure directory exists

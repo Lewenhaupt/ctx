@@ -168,6 +168,39 @@ This is a test fragment.
 	}
 }
 
+func TestHandleFileOverwrite(t *testing.T) {
+	tests := []struct {
+		name           string
+		opts           *BuildOptions
+		filename       string
+		format         string
+		expectedAction string
+	}{
+		{
+			name: "non-interactive mode always overwrites",
+			opts: &BuildOptions{
+				NonInteractive: true,
+			},
+			filename:       "test.md",
+			format:         "opencode",
+			expectedAction: "overwrite",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			action, err := handleFileOverwrite(tt.opts, tt.filename, tt.format)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			if action != tt.expectedAction {
+				t.Errorf("Expected action %s, got %s", tt.expectedAction, action)
+			}
+		})
+	}
+}
+
 func TestDetermineOutputFormats(t *testing.T) {
 	tests := []struct {
 		name            string
