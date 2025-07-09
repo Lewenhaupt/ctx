@@ -17,6 +17,7 @@ type InitOptions struct {
 // InitAnswers holds the user's responses to the init questionnaire.
 type InitAnswers struct {
 	AddOutputFormats bool
+	CustomFormats    map[string]string
 	FragmentsDir     string
 	CreateSample     bool
 }
@@ -111,7 +112,8 @@ func runQuestionnaire() (*InitAnswers, error) {
 		outputFormatsDesc += fmt.Sprintf("- %s: %s\n", format, filename)
 	}
 
-	form := huh.NewForm(
+	// First, ask about output formats
+	outputFormatsForm := huh.NewForm(
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Welcome to ctx init!").
@@ -126,6 +128,24 @@ func runQuestionnaire() (*InitAnswers, error) {
 				Description("You can add custom output formats beyond the defaults").
 				Value(&answers.AddOutputFormats),
 		),
+	)
+
+	if err := outputFormatsForm.Run(); err != nil {
+		return nil, err
+	}
+
+	// If user wants custom formats, prompt for them immediately
+	if answers.AddOutputFormats {
+		customFormats, err := promptForCustomFormats()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get custom formats: %w", err)
+		}
+
+		answers.CustomFormats = customFormats
+	}
+
+	// Continue with remaining questions
+	remainingForm := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Where would you like to store your fragments?").
@@ -155,7 +175,7 @@ func runQuestionnaire() (*InitAnswers, error) {
 				Value(&answers.CreateSample),
 		),
 	)
-	if err := form.Run(); err != nil {
+	if err := remainingForm.Run(); err != nil {
 		return nil, err
 	}
 
@@ -178,14 +198,9 @@ func generateConfig(answers *InitAnswers) (*config.Config, error) {
 	}
 
 	// Handle additional output formats if user requested them
-	if answers.AddOutputFormats {
-		customFormats, err := promptForCustomFormats()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get custom formats: %w", err)
-		}
-
+	if answers.AddOutputFormats && answers.CustomFormats != nil {
 		// Add custom formats to the config
-		for name, filename := range customFormats {
+		for name, filename := range answers.CustomFormats {
 			cfg.OutputFormats[name] = filename
 		}
 	}

@@ -19,6 +19,7 @@ func TestGenerateConfig(t *testing.T) {
 			name: "default configuration",
 			answers: &InitAnswers{
 				AddOutputFormats: false,
+				CustomFormats:    nil,
 				FragmentsDir:     "",
 				CreateSample:     false,
 			},
@@ -36,6 +37,7 @@ func TestGenerateConfig(t *testing.T) {
 			name: "custom fragments directory",
 			answers: &InitAnswers{
 				AddOutputFormats: false,
+				CustomFormats:    nil,
 				FragmentsDir:     "./custom-fragments",
 				CreateSample:     false,
 			},
@@ -51,6 +53,29 @@ func TestGenerateConfig(t *testing.T) {
 					CustomSettings: make(map[string]interface{}),
 				}
 			}(),
+		},
+		{
+			name: "with custom output formats",
+			answers: &InitAnswers{
+				AddOutputFormats: true,
+				CustomFormats: map[string]string{
+					"claude": "CLAUDE.md",
+					"custom": "CUSTOM.txt",
+				},
+				FragmentsDir: "",
+				CreateSample: false,
+			},
+			expected: &config.Config{
+				DefaultTags: []string{},
+				OutputFormats: map[string]string{
+					"opencode": "AGENTS.md",
+					"gemini":   "GEMINI.md",
+					"claude":   "CLAUDE.md",
+					"custom":   "CUSTOM.txt",
+				},
+				FragmentsDir:   "",
+				CustomSettings: make(map[string]interface{}),
+			},
 		},
 	}
 
@@ -151,6 +176,7 @@ func TestGenerateConfigWithInvalidPath(t *testing.T) {
 	// but might be valid on Unix systems, so we'll test a different scenario
 	answers := &InitAnswers{
 		AddOutputFormats: false,
+		CustomFormats:    nil,
 		FragmentsDir:     "/nonexistent/very/deep/path/that/should/not/exist",
 		CreateSample:     false,
 	}
