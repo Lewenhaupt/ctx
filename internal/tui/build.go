@@ -13,17 +13,18 @@ import (
 
 // BuildOptions represents the options for the build command.
 type BuildOptions struct {
-	ConfigFile     string
-	Tags           []string
-	NonInteractive bool
-	OutputFormats  []string
-	OutputFile     string
-	Stdout         bool
+	ConfigFile      string
+	Tags            []string
+	NonInteractive  bool
+	OutputFormats   []string
+	OutputFile      string
+	Stdout          bool
+	NoLocalOverride bool
 }
 
 // RunBuild executes the build command with TUI.
 func RunBuild(opts *BuildOptions) error {
-	cfg, fragments, err := loadConfigAndFragments(opts.ConfigFile)
+	cfg, fragments, err := loadConfigAndFragments(opts.ConfigFile, opts.NoLocalOverride)
 	if err != nil {
 		return err
 	}
@@ -60,7 +61,7 @@ func RunBuild(opts *BuildOptions) error {
 	return handleOutput(opts, output, selectedOutputFormats, outputFiles, cfg)
 }
 
-func loadConfigAndFragments(configFile string) (*config.Config, []parser.Fragment, error) {
+func loadConfigAndFragments(configFile string, noLocalOverride bool) (*config.Config, []parser.Fragment, error) {
 	cfg, err := config.LoadConfig(configFile)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load config: %w", err)
@@ -71,13 +72,20 @@ func loadConfigAndFragments(configFile string) (*config.Config, []parser.Fragmen
 		return nil, nil, fmt.Errorf("failed to get fragments directory: %w", err)
 	}
 
-	fragments, err := parser.ScanFragments(fragmentsDir)
+	globalFragments, err := parser.ScanFragments(fragmentsDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to scan fragments: %w", err)
+		return nil, nil, fmt.Errorf("failed to scan global fragments: %w", err)
 	}
 
+	localFragments, err := parser.ScanLocalFragments()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to scan local fragments: %w", err)
+	}
+
+	fragments := parser.CombineFragments(globalFragments, localFragments, noLocalOverride)
+
 	if len(fragments) == 0 {
-		return nil, nil, fmt.Errorf("no fragments found in %s", fragmentsDir)
+		return nil, nil, fmt.Errorf("no fragments found in %s or local .ctx/fragments", fragmentsDir)
 	}
 
 	return cfg, fragments, nil

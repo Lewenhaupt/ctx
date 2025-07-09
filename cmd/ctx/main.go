@@ -11,12 +11,13 @@ import (
 )
 
 var (
-	configFile     string
-	tags           []string
-	nonInteractive bool
-	outputFormats  []string
-	outputFile     string
-	stdout         bool
+	configFile      string
+	tags            []string
+	nonInteractive  bool
+	outputFormats   []string
+	outputFile      string
+	stdout          bool
+	noLocalOverride bool
 )
 
 var rootCmd = &cobra.Command{
@@ -35,12 +36,13 @@ The tool will scan the fragments directory, present available tags for selection
 and combine the matching fragments into a single output.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		opts := tui.BuildOptions{
-			ConfigFile:     configFile,
-			Tags:           tags,
-			NonInteractive: nonInteractive,
-			OutputFormats:  outputFormats,
-			OutputFile:     outputFile,
-			Stdout:         stdout,
+			ConfigFile:      configFile,
+			Tags:            tags,
+			NonInteractive:  nonInteractive,
+			OutputFormats:   outputFormats,
+			OutputFile:      outputFile,
+			Stdout:          stdout,
+			NoLocalOverride: noLocalOverride,
 		}
 		return tui.RunBuild(&opts)
 	},
@@ -132,6 +134,7 @@ func init() {
 	buildCmd.Flags().StringSliceVar(&outputFormats, "output-format", []string{}, "output format(s) to use (e.g., opencode, gemini, custom)")
 	buildCmd.Flags().StringVar(&outputFile, "output-file", "", "output file path (overrides format-based naming)")
 	buildCmd.Flags().BoolVar(&stdout, "stdout", false, "output to stdout instead of files")
+	buildCmd.Flags().BoolVar(&noLocalOverride, "no-local-override", false, "include both local and global fragments even if they have the same name")
 
 	// Add custom completion for tags flag
 	if err := buildCmd.RegisterFlagCompletionFunc("tags", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -164,10 +167,17 @@ func getAvailableTags() []string {
 		return []string{}
 	}
 
-	fragments, err := parser.ScanFragments(fragmentsDir)
+	globalFragments, err := parser.ScanFragments(fragmentsDir)
 	if err != nil {
 		return []string{}
 	}
+
+	localFragments, err := parser.ScanLocalFragments()
+	if err != nil {
+		return []string{}
+	}
+
+	fragments := parser.CombineFragments(globalFragments, localFragments, false)
 
 	return parser.GetAllTags(fragments)
 }

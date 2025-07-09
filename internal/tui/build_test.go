@@ -144,7 +144,7 @@ This is a test fragment.
 	}
 
 	// Test loading config and fragments
-	cfg, fragments, err := loadConfigAndFragments("")
+	cfg, fragments, err := loadConfigAndFragments("", false)
 	if err != nil {
 		t.Fatalf("loadConfigAndFragments failed: %v", err)
 	}
