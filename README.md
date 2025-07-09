@@ -102,7 +102,32 @@ go build -o ctx ./cmd/ctx
 go install github.com/Lewenhaupt/ctx/cmd/ctx@latest
 ```
 
-## Quick Start
+## Getting Started
+
+### Initialize Configuration
+
+The easiest way to get started is to use the interactive init command to scaffold your configuration:
+
+```bash
+ctx init
+```
+
+This will guide you through:
+- Setting up your configuration file (`~/.config/.ctx/config.json`)
+- Choosing output formats (opencode, gemini, or custom formats)
+- Configuring your fragments directory location
+- Optionally creating a sample fragment to get started
+
+The init command will:
+1. Show you the default output formats available
+2. Allow you to add custom output formats if needed
+3. Let you specify where to store your fragments (defaults to `~/.config/.ctx/fragments`)
+4. Optionally create a hello-world sample fragment
+5. Create all necessary directories and configuration files
+
+### Manual Setup (Alternative)
+
+If you prefer to set up manually:
 
 1. **Create fragments directory**:
    ```bash
@@ -133,6 +158,18 @@ go install github.com/Lewenhaupt/ctx/cmd/ctx@latest
    # Output to file
    ctx build --tags typescript --non-interactive > AGENTS.md
    ```
+
+## Quick Start
+
+After running `ctx init`, you can immediately start building:
+
+```bash
+# Interactive mode - select tags and output formats
+ctx build
+
+# Non-interactive mode with specific tags
+ctx build --tags hello,world --non-interactive
+```
 
 ## Configuration
 
@@ -185,7 +222,19 @@ Your markdown content here.
 - Only `.md` and `.markdown` files are processed
 - Fragments are combined in the order they're found
 
-## CLI Usage
+## CLI Commands
+
+### Initialize Configuration
+
+```bash
+ctx init [flags]
+
+Flags:
+  --config-file string   Config file path (default: XDG_CONFIG_HOME/.ctx/config.json)
+  -h, --help            Help for init
+```
+
+### Build Fragments
 
 ```bash
 ctx build [flags]

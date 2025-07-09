@@ -2,8 +2,10 @@ package tui
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/Lewenhaupt/ctx/internal/config"
 	"github.com/charmbracelet/huh"
@@ -42,7 +44,7 @@ func RunInit(opts *InitOptions) error {
 			huh.NewGroup(
 				huh.NewConfirm().
 					Title("Configuration file already exists").
-					Description(fmt.Sprintf("A configuration file already exists at %s. Do you want to overwrite it?", configPath)).
+					Description(fmt.Sprintf("A configuration file already exists at %s. Do you want to overwrite it? (A backup will be created)", configPath)).
 					Value(&overwrite),
 			),
 		)
@@ -54,6 +56,11 @@ func RunInit(opts *InitOptions) error {
 		if !overwrite {
 			fmt.Println("Init cancelled.")
 			return nil
+		}
+
+		// Create backup of existing config
+		if err := createConfigBackup(configPath); err != nil {
+			return fmt.Errorf("failed to create config backup: %w", err)
 		}
 	}
 
@@ -117,12 +124,7 @@ func runQuestionnaire() (*InitAnswers, error) {
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Welcome to ctx init!").
-				Description("This will help you set up your ctx configuration."),
-		),
-		huh.NewGroup(
-			huh.NewNote().
-				Title("Default Output Formats").
-				Description("The following output formats are available by default:\n"+outputFormatsDesc),
+				Description("This will help you set up your ctx configuration.\n\nThe following output formats are available by default:\n"+outputFormatsDesc),
 			huh.NewConfirm().
 				Title("Do you want to add additional output formats?").
 				Description("You can add custom output formats beyond the defaults").
@@ -210,7 +212,9 @@ func generateConfig(answers *InitAnswers) (*config.Config, error) {
 
 // createSampleFragment creates a hello-world sample fragment.
 func createSampleFragment(fragmentsDir string) error {
-	sampleContent := `ctx-tags: hello, world, sample
+	sampleContent := `---
+ctx-tags: [hello, world, sample]
+---
 
 # Hello World
 
@@ -292,4 +296,36 @@ func promptForCustomFormats() (map[string]string, error) {
 	}
 
 	return customFormats, nil
+}
+
+// createConfigBackup creates a backup of the existing config file.
+func createConfigBackup(configPath string) error {
+	// Generate backup filename with timestamp
+	timestamp := time.Now().Format("20060102-150405")
+	backupPath := configPath + ".bak." + timestamp
+
+	// Open source file
+	src, err := os.Open(configPath)
+	if err != nil {
+		return fmt.Errorf("failed to open source config file: %w", err)
+	}
+
+	defer func() { _ = src.Close() }()
+
+	// Create backup file
+	dst, err := os.Create(backupPath)
+	if err != nil {
+		return fmt.Errorf("failed to create backup file: %w", err)
+	}
+
+	defer func() { _ = dst.Close() }()
+
+	// Copy content
+	if _, err := io.Copy(dst, src); err != nil {
+		return fmt.Errorf("failed to copy config to backup: %w", err)
+	}
+
+	fmt.Printf("Config backup created: %s\n", backupPath)
+
+	return nil
 }
